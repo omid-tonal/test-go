@@ -45,7 +45,7 @@ jobs:
         # Build a docker image and
         # push it to ECR
         docker build --build-arg GITHUB_TOKEN -t $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG \
-                                              -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG content_service/.
+                                              -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG hello_service/.
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
