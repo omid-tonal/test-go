@@ -1,0 +1,51 @@
+on:
+  push:
+    branches:
+      - prod/hello-service
+
+name: Push image to ECR
+
+jobs:
+  deploy:
+    name: Push
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=date::$(date +'%F')"
+
+    - name: Get short git
+      id: git
+      run: echo "::set-output name=short::$(git rev-parse --short HEAD)"
+      
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: hello-service
+        TAG: prod-${{steps.date.outputs.date}}-${{steps.git.outputs.short}}
+        LATEST_TAG: prod-latest
+        GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
+      run: |
+        # Build a docker image and
+        # push it to ECR
+        docker build --build-arg GITHUB_TOKEN -t $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG \
+                                              -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG content_service/.
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
