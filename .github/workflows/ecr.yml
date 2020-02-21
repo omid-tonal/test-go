@@ -53,6 +53,6 @@ jobs:
       id: docker-scan
       uses: anchore/scan-action@master
       with:
-        image-reference: ${{ steps.docker-image.outputs.image }}
+        image-reference: ${{ steps.build-image.outputs.image }}
         fail-build: true
     - run: echo "${{ steps.docker-scan.outputs.vulnerabilities }} file to vulnerabilities."    
