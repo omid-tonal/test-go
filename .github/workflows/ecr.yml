@@ -54,7 +54,7 @@ jobs:
       uses: alexjurkiewicz/ecr-scan-image@v1.2.0
       with:
         repository: myorg/myimage
-        tag: ${{ steps.docker-build.outputs.tag }}
+        tag: ${{ steps.docker-build.outputs.image }}
         # fail_threshold: medium
     # Access scan results in later steps
     - run: echo "${{ steps.docker-scan.outputs.total }} total vulnerabilities."
