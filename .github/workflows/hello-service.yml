@@ -45,8 +45,6 @@ jobs:
 
         docker build --build-arg GITHUB_TOKEN -t $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG \
                                               -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG hello_service/.
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG
         echo "::set-output name=tag::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
         echo "::set-output name=latest-tag::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
     - name: Scan image
