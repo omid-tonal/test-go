@@ -49,6 +49,7 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
+        echo "::set-output name=tag::$TAG"
     - name: Scan Docker image
       id: docker-scan
       uses: alexjurkiewicz/ecr-scan-image@v1.2.0
