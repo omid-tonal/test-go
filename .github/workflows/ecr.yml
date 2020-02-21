@@ -9,7 +9,8 @@ jobs:
   deploy:
     name: Push
     runs-on: ubuntu-latest
-
+    env:
+      SERVICE: hello-service
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -33,26 +34,34 @@ jobs:
       id: git
       run: echo "::set-output name=short::$(git rev-parse --short HEAD)"
       
-    - name: Build, tag, and push image to Amazon ECR
+    - name: Build image
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: hello-service
+        ECR_REPOSITORY: ${{SERVICE}}
         TAG: prod-${{steps.date.outputs.date}}-${{steps.git.outputs.short}}
         LATEST_TAG: prod-latest
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
       run: |
-        # Build a docker image and
-        # push it to ECR
+        # Build and tag a docker image
+
         docker build --build-arg GITHUB_TOKEN -t $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG \
-                                              -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG hello_service/.
+                                              -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG ${{SERVICE}}/.
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
+        echo "::set-output name=tag::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
+        echo "::set-output name=latest-tag::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
     - name: Scan image
-      id: docker-scan
+      id: scan-image
       uses: anchore/scan-action@master
       with:
-        image-reference: ${{ steps.docker-image.outputs.image }}
+        image-reference: ${{ steps.build-image.outputs.tag }}
         fail-build: true
-    - run: echo "${{ steps.docker-scan.outputs.vulnerabilities }} file to vulnerabilities."    
+    - name: Push image
+      id: push-image        
+      run: |
+        # push docker image to ECR
+        docker push ${{ steps.build-image.outputs.tag }}
+        docker push ${{ steps.build-image.outputs.latest-tag }}
+        echo "::set-output name=image::${{ steps.build-image.outputs.tag }}"
+        
