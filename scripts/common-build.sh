@@ -9,7 +9,7 @@ TAG=t$(date "+%F")-$(git rev-parse --short HEAD)
 LATEST_TAG=latest
 BRANCH_PREFIX=$(git branch | grep \* | cut -d ' ' -f2 | cut -d '/' -f1)
 
-REPO=test-go
+REPO=$(pwd | awk -F / '{print $(NF -1)}')
 BRANCH=$(git branch | grep \* | cut -d ' ' -f2)
 COMMIT=$(git rev-parse --short HEAD)
 
