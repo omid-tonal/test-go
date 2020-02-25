@@ -40,10 +40,13 @@ jobs:
         TAG: prod-${{steps.date.outputs.date}}-${{steps.git.outputs.short}}
         LATEST_TAG: prod-latest
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
+        REPO: test-go
+        BRANCH: prod/hello-service
+        COMMIT: ${{steps.git.outputs.short}}
       run: |
         # Build and tag a docker image
 
-        docker build --build-arg GITHUB_TOKEN -t $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG \
+        docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG \
                                               -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG hello_service/.
         echo "::set-output name=tag::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
         echo "::set-output name=latest-tag::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
