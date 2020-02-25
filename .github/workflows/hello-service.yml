@@ -49,7 +49,7 @@ jobs:
         docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG \
                                               -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG hello_service/.
         echo "::set-output name=tag::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
-        echo "::set-output name=latest-tag::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
+        echo "::set-output name=latest-tag::$ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG"
     - name: Scan image
       id: scan-image
       uses: anchore/scan-action@master
