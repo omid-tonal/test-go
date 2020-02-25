@@ -4,12 +4,11 @@ function build_service() {
 
 echo on
 SERVICE_NAME=$1
-# SERVICE_EXE=$(echo "$SERVICE_NAME" | tr '-' '_')_linux
-# rm ${SERVICE_EXE}
-# GOOS=linux GARCH=amd64 go build -o ${SERVICE_EXE} .
 
 TAG=t$(date "+%F")-$(git rev-parse --short HEAD)
 LATEST_TAG=latest
+REPO=test-go
+BRANCH=$(git branch | grep \* | cut -d ' ' -f2)
 BRANCH_PREFIX=$(git branch | grep \* | cut -d ' ' -f2 | cut -d '/' -f1)
 
 if [[ $BRANCH_PREFIX != "master" ]]; then
@@ -18,7 +17,7 @@ if [[ $BRANCH_PREFIX != "master" ]]; then
 fi
 
 #https://tonal.atlassian.net/wiki/spaces/MC/pages/836370865/How+to+create+and+set+up+a+GITHB+TOKEN
-docker build --build-arg GITHUB_TOKEN -t 925863516128.dkr.ecr.us-west-2.amazonaws.com/${SERVICE_NAME}:$LATEST_TAG \
+docker build --build-arg GITHUB_TOKEN --build-arg BRANCH=${BRANCH} --build-arg REPO=${REPO} -t 925863516128.dkr.ecr.us-west-2.amazonaws.com/${SERVICE_NAME}:$LATEST_TAG \
              -t 925863516128.dkr.ecr.us-west-2.amazonaws.com/${SERVICE_NAME}:$TAG . && \
 
 eval $(aws ecr get-login --no-include-email --region us-west-2) && \
