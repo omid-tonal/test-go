@@ -34,10 +34,10 @@ jobs:
       id: commit
       run: echo "::set-output name=short::$(git rev-parse --short HEAD)"
 
-    - name: Get branch
+    - name: Get branch name
       id: branch
-      run: echo "::set-output name=branch::$(git branch --contains ${{steps.commit.outputs.short}})"
-      
+      run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+
     - name: Build image
       id: build-image
       env:
