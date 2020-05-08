@@ -1,7 +1,9 @@
 on:
   push:
-    branches:
-      - prod/hello-service
+    # branches:
+    #   - prod/hello-service
+    paths:
+      - hello_service/**  
 
 name: Push hello-service image to ECR
 
@@ -28,21 +30,25 @@ jobs:
       id: date
       run: echo "::set-output name=date::$(date +'%F')"
 
-    - name: Get short git
-      id: git
+    - name: Get short commit
+      id: commit
       run: echo "::set-output name=short::$(git rev-parse --short HEAD)"
+
+    - name: Get branch
+      id: branch
+      run: echo "::set-output name=branch::$(git branch --contains ${{steps.commit.outputs.short}})"
       
     - name: Build image
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: hello-service
-        TAG: prod-${{steps.date.outputs.date}}-${{steps.git.outputs.short}}
-        LATEST_TAG: prod-latest
+        TAG: ${{steps.date.outputs.date}}-${{steps.commit.outputs.short}}
+        LATEST_TAG: latest
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
         REPO: test-go
-        BRANCH: prod/hello-service
-        COMMIT: ${{steps.git.outputs.short}}
+        BRANCH: ${{steps.branch.outputs.branch}}
+        COMMIT: ${{steps.commit.outputs.short}}
       run: |
         # Build and tag a docker image
 
