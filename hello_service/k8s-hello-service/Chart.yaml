@@ -1,0 +1,16 @@
+apiVersion: v2
+name: hello-service
+version: 1.0.1
+appVersion: 1.0.1
+type: application
+home: https://github.com/omid-tonal/api-go/hello_service
+sources: 
+ - https://github.com/omid-tonal/test-go/hello_service
+dependencies:
+  - name: go-app
+    repository: "https://tonal-charts.tws.tonal.com"
+    version: 1.0.0
+    alias: hello-service
+maintainers:
+- name: omid nejati
+  email: omid@tonal.com

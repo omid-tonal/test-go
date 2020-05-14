@@ -1,0 +1,6 @@
+dependencies:
+- name: go-app
+  repository: https://tonal-charts.tws.tonal.com
+  version: 1.0.0
+digest: sha256:aa8bd1cb2f7f4bd6b1f59781e50e6cfacee02736bf23b7c4b0e6a4815d32425f
+generated: "2020-05-11T19:27:52.343735-07:00"

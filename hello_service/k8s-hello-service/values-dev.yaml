@@ -1,0 +1,5 @@
+global:
+  env: dev 
+labeling-service:
+  replicas: 1
+

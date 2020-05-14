@@ -1,0 +1,11 @@
+labeling-service:
+  replicas: 1
+  image:
+    name: hello-service
+    tag: latest
+  envFrom:
+    envConfigEnabled: false
+  service:
+    enabled: false
+
+    
