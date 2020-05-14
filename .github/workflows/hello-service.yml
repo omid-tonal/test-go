@@ -64,16 +64,17 @@ jobs:
     - name: Push image
       id: push-image 
       env:
-        ECR: 925863516128.dkr.ecr.us-west-2.amazonaws.com
+        AWS: 925863516128
         SERVICE_NAME: hello-service       
       run: |
         # push docker image to ECR
         docker push ${{ steps.build-image.outputs.image }}
         docker push ${{ steps.build-image.outputs.latest-tag }}
-        echo "Docker image tag:${{ steps.build-image.outputs.tag }}"
-        echo "kubectl set image deployment/dev-$SERVICE_NAME dev-$SERVICE_NAME=$ECR/$SERVICE_NAME:${{ steps.build-image.outputs.tag }}" -n dev"
-        echo "kubectl set image deployment/qa-$SERVICE_NAME qa-$SERVICE_NAME=$ECR/$SERVICE_NAME:${{ steps.build-image.outputs.tag }}" -n qa"
-        echo "kubectl set image deployment/prod-$SERVICE_NAME prod-$SERVICE_NAME=$ECR/$SERVICE_NAME:${{ steps.build-image.outputs.tag }}" -n prod"
+        echo "kubectl set image deployment/dev-$SERVICE_NAME dev-$SERVICE_NAME=$AWS.dkr.ecr.us-west-2.amazonaws.com/$SERVICE_NAME:${{ steps.build-image.outputs.tag }} -n dev"
+        echo "kubectl set image deployment/qa-$SERVICE_NAME qa-$SERVICE_NAME=$AWS.dkr.ecr.us-west-2.amazonaws.com/$SERVICE_NAME:${{ steps.build-image.outputs.tag }} -n qa"
+        echo "kubectl set image deployment/prod-$SERVICE_NAME prod-$SERVICE_NAME=$AWS.dkr.ecr.us-west-2.amazonaws.com/$SERVICE_NAME:${{ steps.build-image.outputs.tag }} -n prod"
+        echo ""
+        echo "Docker image tag for $SERVICE_NAME: ${{ steps.build-image.outputs.tag }}"
     # - name: change the tag
     #   run: |
     #     #change the tag to the new one on values.yaml
