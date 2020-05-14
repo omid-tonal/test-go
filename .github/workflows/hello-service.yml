@@ -1,12 +1,12 @@
 on:
   push:
     paths:
-      - hello_service/**  
+      - hello_service/*.go 
           
 name: Hello-Service CI 
 
 jobs:
-  deploy:
+  build:
     name: Docker
     runs-on: ubuntu-latest
     steps:
@@ -68,6 +68,20 @@ jobs:
         docker push ${{ steps.build-image.outputs.image }}
         docker push ${{ steps.build-image.outputs.latest-tag }}
         echo "Docker image tag:${{ steps.build-image.outputs.tag }}"
-        echo "kubectl set image deployment/dev-$SERVICE_NAME dev-$SERVICE_NAME=${{ steps.build-image.outputs.image }} -n dev"
-        echo "kubectl set image deployment/qa-$SERVICE_NAME dev-$SERVICE_NAME=${{ steps.build-image.outputs.image }} -n qa"
-        echo "kubectl set image deployment/$SERVICE_NAME dev-$SERVICE_NAME=${{ steps.build-image.outputs.image }} -n prod"
+        echo "kubectl set image deployment/dev-$SERVICE_NAME dev-$SERVICE_NAME=925863516128.dkr.ecr.us-west-2.amazonaws.com/$SERVICE_NAME:$TAG -n dev"
+        echo "kubectl set image deployment/qa-$SERVICE_NAME qa-$SERVICE_NAME=925863516128.dkr.ecr.us-west-2.amazonaws.com/$SERVICE_NAME:$TAG -n qa"
+        echo "kubectl set image deployment/prod-$SERVICE_NAME prod-$SERVICE_NAME=925863516128.dkr.ecr.us-west-2.amazonaws.com/$SERVICE_NAME:$TAG -n prod"
+    # - name: change the tag
+    #   run: |
+    #     #change the tag to the new one on values.yaml
+    #     sed -i 's/tag.*/tag:${{ steps.build-image.outputs.latest-tag }}/g' ../hello_service/k8s-hello-service/values.yaml
+    # - name: check for changes
+    #   run: git status
+    # - name: stage changed files
+    #   run: git add hello_service/k8s-hello-service/.
+    # - name: commit changed files
+    #   run: git commit -m "Auto updating tag on values.yaml"
+    # - name: fetch from master
+    #   run: git fetch origin master
+    # - name: push code to master
+    #   run: git push origin HEAD:master  
