@@ -62,7 +62,7 @@ jobs:
       id: scan-image
       uses: anchore/scan-action@master
       with:
-        image-reference: ${{ steps.build-image.outputs.tag }}
+        image-reference: ${{ steps.build-image.outputs.image }}
         fail-build: true
     - name: Push image
       id: push-image        
