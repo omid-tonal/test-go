@@ -1,4 +1,4 @@
-labeling-service:
+hello-service:
   replicas: 1
   image:
     name: hello-service

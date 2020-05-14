@@ -1,5 +1,5 @@
 global:
   env: dev 
-labeling-service:
+hello-service:
   replicas: 1
 
