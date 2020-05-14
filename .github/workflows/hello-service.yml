@@ -64,7 +64,7 @@ jobs:
     - name: Push image
       id: push-image 
       env:
-        AWS: 925863516128
+        AWS: "925863516128"
         SERVICE_NAME: hello-service       
       run: |
         # push docker image to ECR
