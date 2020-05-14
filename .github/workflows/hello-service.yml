@@ -1,10 +1,11 @@
 on:
   push:
-    # branches:
-    #   - prod/hello-service
     paths:
       - hello_service/**  
-
+  pull_request:
+    paths:
+      - hello_service/** 
+          
 name: Hello-Service CI 
 
 jobs:
@@ -42,7 +43,7 @@ jobs:
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: hello-service
+        SERVICE_NAME: hello-service
         TAG: ${{steps.date.outputs.date}}-${{steps.commit.outputs.short}}
         LATEST_TAG: latest
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
@@ -52,11 +53,11 @@ jobs:
       run: |
         # Build and tag a docker image
 
-        docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG \
-                                              -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG hello_service/.
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
+        docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
+                                              -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
+        echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
         echo "::set-output name=tag::$TAG"
-        echo "::set-output name=latest-tag::$ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG"
+        echo "::set-output name=latest-tag::$ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG"
     - name: Scan image
       id: scan-image
       uses: anchore/scan-action@master
@@ -71,4 +72,6 @@ jobs:
         docker push ${{ steps.build-image.outputs.latest-tag }}
         echo "${{ steps.build-image.outputs.image }}"
         echo "${{ steps.build-image.outputs.tag }}"
-        echo "helm upgrade dev-hello-service  . --set image.tag=${{ steps.build-image.outputs.tag }} --tiller-namespace dev"
+        echo "kubectl set image deployment/dev-$SERVICE_NAME dev-$SERVICE_NAME=${{ steps.build-image.outputs.image }} -n dev"
+        echo "kubectl set image deployment/qa-$SERVICE_NAME dev-$SERVICE_NAME=${{ steps.build-image.outputs.image }} -n qa"
+        echo "kubectl set image deployment/$SERVICE_NAME dev-$SERVICE_NAME=${{ steps.build-image.outputs.image }} -n prod"
