@@ -2,9 +2,6 @@ on:
   push:
     paths:
       - hello_service/**  
-  pull_request:
-    paths:
-      - hello_service/** 
           
 name: Hello-Service CI 
 
