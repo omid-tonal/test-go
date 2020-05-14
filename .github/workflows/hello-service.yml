@@ -5,11 +5,11 @@ on:
     paths:
       - hello_service/**  
 
-name: Push hello-service image to ECR
+name: Hello-Service CI 
 
 jobs:
   deploy:
-    name: Push
+    name: Docker
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -54,7 +54,8 @@ jobs:
 
         docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG \
                                               -t $ECR_REGISTRY/$ECR_REPOSITORY:$TAG hello_service/.
-        echo "::set-output name=tag::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
+        echo "::set-output name=tag::$TAG"
         echo "::set-output name=latest-tag::$ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG"
     - name: Scan image
       id: scan-image
@@ -68,5 +69,6 @@ jobs:
         # push docker image to ECR
         docker push ${{ steps.build-image.outputs.tag }}
         docker push ${{ steps.build-image.outputs.latest-tag }}
-        echo "::set-output name=image::${{ steps.build-image.outputs.tag }}"
-        
+        echo "${{ steps.build-image.outputs.image }}"
+        echo "${{ steps.build-image.outputs.tag }}"
+        echo "helm upgrade dev-hello-service  . --set image.tag=${{ steps.build-image.outputs.tag }} --tiller-namespace dev"
