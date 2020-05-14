@@ -55,22 +55,25 @@ jobs:
         echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
         echo "::set-output name=tag::$TAG"
         echo "::set-output name=latest-tag::$ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG"
-    - name: Scan image
-      id: scan-image
-      uses: anchore/scan-action@master
-      with:
-        image-reference: ${{ steps.build-image.outputs.image }}
-        fail-build: true
+    # - name: Scan image
+    #   id: scan-image
+    #   uses: anchore/scan-action@master
+    #   with:
+    #     image-reference: ${{ steps.build-image.outputs.image }}
+    #     fail-build: true
     - name: Push image
-      id: push-image        
+      id: push-image 
+      env:
+        ECR: 925863516128.dkr.ecr.us-west-2.amazonaws.com
+        SERVICE_NAME: hello-service       
       run: |
         # push docker image to ECR
         docker push ${{ steps.build-image.outputs.image }}
         docker push ${{ steps.build-image.outputs.latest-tag }}
         echo "Docker image tag:${{ steps.build-image.outputs.tag }}"
-        echo "kubectl set image deployment/dev-$SERVICE_NAME dev-$SERVICE_NAME=925863516128.dkr.ecr.us-west-2.amazonaws.com/$SERVICE_NAME:$TAG -n dev"
-        echo "kubectl set image deployment/qa-$SERVICE_NAME qa-$SERVICE_NAME=925863516128.dkr.ecr.us-west-2.amazonaws.com/$SERVICE_NAME:$TAG -n qa"
-        echo "kubectl set image deployment/prod-$SERVICE_NAME prod-$SERVICE_NAME=925863516128.dkr.ecr.us-west-2.amazonaws.com/$SERVICE_NAME:$TAG -n prod"
+        echo "kubectl set image deployment/dev-$SERVICE_NAME dev-$SERVICE_NAME=$ECR/$SERVICE_NAME:${{ steps.build-image.outputs.tag }}" -n dev"
+        echo "kubectl set image deployment/qa-$SERVICE_NAME qa-$SERVICE_NAME=$ECR/$SERVICE_NAME:${{ steps.build-image.outputs.tag }}" -n qa"
+        echo "kubectl set image deployment/prod-$SERVICE_NAME prod-$SERVICE_NAME=$ECR/$SERVICE_NAME:${{ steps.build-image.outputs.tag }}" -n prod"
     # - name: change the tag
     #   run: |
     #     #change the tag to the new one on values.yaml
