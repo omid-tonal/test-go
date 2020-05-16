@@ -29,8 +29,8 @@ jobs:
       run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
 #hello-service      
     - uses: khan/pull-request-comment-trigger@master
-      name: build hello-service
-      id: build
+      name: Build and Push hello-service
+      id: hello-service
       env:
         REPO: test-go
         SERVICE_NAME: hello-service
@@ -50,15 +50,23 @@ jobs:
         echo "::set-output name=service::$SERVICE_NAME"
         echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
         echo "::set-output name=latest-tag::$ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG"
-      if: steps.build.outputs.triggered == 'true'
+        # push docker image to ECR
+        docker push ${{ steps.build.outputs.image }}
+        docker push ${{ steps.build.outputs.latest-tag }}
+        echo "kubectl set image deployment/dev-${{ steps.build.outputs.service }} dev-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n dev"
+        echo "kubectl set image deployment/qa-${{ steps.build.outputs.service }} qa-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n qa"
+        echo "kubectl set image deployment/prod-${{ steps.build.outputs.service }} prod-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n prod"
+        echo ""
+        echo "Docker image tag for ${{ steps.build.outputs.service }}: ${{ steps.build.outputs.tag }}"
+      if: steps.hello-service.outputs.triggered == 'true'
 #test-service    
     - uses: khan/pull-request-comment-trigger@master
       name: build test-service    
-      id: build
+      id: test-service
       with:
         trigger: '#test-service'
     - run: 'echo Found test-service!'
-      if: steps.build.outputs.triggered == 'true'
+      if: steps.test-service.outputs.triggered == 'true'
   # hello-service:
   #   needs: pre-build
   #   if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#build hello-service')
@@ -90,17 +98,17 @@ jobs:
     #   with:
     #     image-reference: ${{ steps.build.outputs.image }}
     #     fail-build: true      
-    - name: push image
-      id: push     
-      run: |
-        # push docker image to ECR
-        docker push ${{ steps.build.outputs.image }}
-        docker push ${{ steps.build.outputs.latest-tag }}
-        echo "kubectl set image deployment/dev-${{ steps.build.outputs.service }} dev-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n dev"
-        echo "kubectl set image deployment/qa-${{ steps.build.outputs.service }} qa-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n qa"
-        echo "kubectl set image deployment/prod-${{ steps.build.outputs.service }} prod-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n prod"
-        echo ""
-        echo "Docker image tag for ${{ steps.build.outputs.service }}: ${{ steps.build.outputs.tag }}"
+    # - name: push image
+    #   id: push     
+    #   run: |
+    #     # push docker image to ECR
+    #     docker push ${{ steps.build.outputs.image }}
+    #     docker push ${{ steps.build.outputs.latest-tag }}
+    #     echo "kubectl set image deployment/dev-${{ steps.build.outputs.service }} dev-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n dev"
+    #     echo "kubectl set image deployment/qa-${{ steps.build.outputs.service }} qa-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n qa"
+    #     echo "kubectl set image deployment/prod-${{ steps.build.outputs.service }} prod-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n prod"
+    #     echo ""
+    #     echo "Docker image tag for ${{ steps.build.outputs.service }}: ${{ steps.build.outputs.tag }}"
     # - name: change the tag
     #   run: |
     #     #change the tag to the new one on values.yaml
