@@ -1,83 +1,87 @@
 on:
-  push:
-    paths:
-      - hello_service/*.go 
+  pull_request:
+    types: [opened]
+  issue_comment:
+    types: [created]
           
-name: Hello-Service CI 
+name: CI 
 
 jobs:
-  build:
-    name: Docker
+  pre-build:
+    name: pre-build
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
-
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
-
     - name: Get current date
       id: date
       run: echo "::set-output name=date::$(date +'%F')"
-
     - name: Get short commit
       id: commit
       run: echo "::set-output name=short::$(git rev-parse --short HEAD)"
-
     - name: Get branch name
       id: branch
       run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
-
-    - name: Build image
-      id: build-image
+  
+  hello-service:
+    name: build
+    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#build hello-service')
+    runs-on: ubuntu-latest
+    steps:
+    - name: build image
+      id: build
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        SERVICE_NAME: hello-service
-        TAG: ${{steps.date.outputs.date}}-${{steps.commit.outputs.short}}
-        LATEST_TAG: latest
-        GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
         REPO: test-go
+        SERVICE_NAME: hello-service
+        LATEST_TAG: latest
+        TAG: ${{steps.date.outputs.date}}-${{steps.commit.outputs.short}}
+        GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
         BRANCH: ${{steps.branch.outputs.branch}}
         COMMIT: ${{steps.commit.outputs.short}}
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
         # Build and tag a docker image
-
         docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
                                               -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
-        echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
         echo "::set-output name=tag::$TAG"
+        echo "::set-output name=service::$SERVICE_NAME"
+        echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
         echo "::set-output name=latest-tag::$ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG"
-    # - name: Scan image
+
+  push:
+    name: push
+    runs-on: ubuntu-latest
+    steps:
+    # - name: scan image
     #   id: scan-image
     #   uses: anchore/scan-action@master
     #   with:
-    #     image-reference: ${{ steps.build-image.outputs.image }}
-    #     fail-build: true
-    - name: Push image
-      id: push-image 
-      env:
-        SERVICE_NAME: hello-service       
+    #     image-reference: ${{ steps.build.outputs.image }}
+    #     fail-build: true      
+    - name: push image
+      id: push     
       run: |
         # push docker image to ECR
-        docker push ${{ steps.build-image.outputs.image }}
-        docker push ${{ steps.build-image.outputs.latest-tag }}
-        echo "kubectl set image deployment/dev-$SERVICE_NAME dev-$SERVICE_NAME=${{ steps.build-image.outputs.image }} -n dev"
-        echo "kubectl set image deployment/qa-$SERVICE_NAME qa-$SERVICE_NAME=${{ steps.build-image.outputs.image }} -n qa"
-        echo "kubectl set image deployment/prod-$SERVICE_NAME prod-$SERVICE_NAME=${{ steps.build-image.outputs.image }} -n prod"
+        docker push ${{ steps.build.outputs.image }}
+        docker push ${{ steps.build.outputs.latest-tag }}
+        echo "kubectl set image deployment/dev-${{ steps.build.outputs.service }} dev-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n dev"
+        echo "kubectl set image deployment/qa-${{ steps.build.outputs.service }} qa-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n qa"
+        echo "kubectl set image deployment/prod-${{ steps.build.outputs.service }} prod-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n prod"
         echo ""
-        echo "Docker image tag for $SERVICE_NAME: ${{ steps.build-image.outputs.tag }}"
+        echo "Docker image tag for ${{ steps.build.outputs.service }}: ${{ steps.build.outputs.tag }}"
     # - name: change the tag
     #   run: |
     #     #change the tag to the new one on values.yaml
-    #     sed -i 's/tag.*/tag:${{ steps.build-image.outputs.latest-tag }}/g' ../hello_service/k8s-hello-service/values.yaml
+    #     sed -i 's/tag.*/tag:${{ steps.build.outputs.latest-tag }}/g' ../hello_service/k8s-hello-service/values.yaml
     # - name: check for changes
     #   run: git status
     # - name: stage changed files
