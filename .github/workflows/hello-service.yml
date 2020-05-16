@@ -4,7 +4,7 @@ on:
 name: CI 
 
 jobs:
-  pre-build:
+  build:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -27,13 +27,9 @@ jobs:
     - name: Get branch name
       id: branch
       run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
-  
-  hello-service:
-    needs: pre-build
-    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#build hello-service')
-    runs-on: ubuntu-latest
-    steps:
-    - name: build image
+#hello-service      
+    - uses: khan/pull-request-comment-trigger@master
+      name: build hello-service
       id: build
       env:
         REPO: test-go
@@ -44,7 +40,9 @@ jobs:
         BRANCH: ${{steps.branch.outputs.branch}}
         COMMIT: ${{steps.commit.outputs.short}}
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      run: |
+      with:
+        trigger: '#hello-service'
+    - run: |
         # Build and tag a docker image
         docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
                                               -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
@@ -52,30 +50,40 @@ jobs:
         echo "::set-output name=service::$SERVICE_NAME"
         echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
         echo "::set-output name=latest-tag::$ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG"
-        
-  test:
-    needs: pre-build
-    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#test')
-    runs-on: ubuntu-latest
-    steps:
-    - name: build image
+      if: steps.build.outputs.triggered == 'true'
+#test-service    
+    - uses: khan/pull-request-comment-trigger@master
+      name: build test-service    
       id: build
-      env:
-        REPO: test-go
-        SERVICE_NAME: test
-        LATEST_TAG: latest
-        TAG: ${{steps.date.outputs.date}}-${{steps.commit.outputs.short}}
-        GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
-        BRANCH: ${{steps.branch.outputs.branch}}
-        COMMIT: ${{steps.commit.outputs.short}}
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      run: |
-        echo "Found $SERVICE_NAME!"
+      with:
+        trigger: '#test-service'
+    - run: 'echo Found test-service!'
+      if: steps.build.outputs.triggered == 'true'
+  # hello-service:
+  #   needs: pre-build
+  #   if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#build hello-service')
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: build image
+  #     id: build
+  #     env:
+  #       REPO: test-go
+  #       SERVICE_NAME: hello-service
+  #       LATEST_TAG: latest
+  #       TAG: ${{steps.date.outputs.date}}-${{steps.commit.outputs.short}}
+  #       GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
+  #       BRANCH: ${{steps.branch.outputs.branch}}
+  #       COMMIT: ${{steps.commit.outputs.short}}
+  #       ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+  #     run: |
+  #       # Build and tag a docker image
+  #       docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
+  #                                             -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
+  #       echo "::set-output name=tag::$TAG"
+  #       echo "::set-output name=service::$SERVICE_NAME"
+  #       echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
+  #       echo "::set-output name=latest-tag::$ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG"
 
-  push:
-    needs: [hello-service, test]
-    runs-on: ubuntu-latest
-    steps:
     # - name: scan image
     #   id: scan-image
     #   uses: anchore/scan-action@master
