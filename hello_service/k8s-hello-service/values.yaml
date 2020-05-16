@@ -1,8 +1,8 @@
-labeling-service:
+hello-service:
   replicas: 1
   image:
     name: hello-service
-    tag: latest
+    tag: 2020-05-14-57c1b96
   envFrom:
     envConfigEnabled: false
   service:
