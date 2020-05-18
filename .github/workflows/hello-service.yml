@@ -26,10 +26,10 @@ jobs:
       run: echo "::set-output name=date::$(date +'%F')"
     - name: Get short commit
       id: commit
-      run: echo "::set-output name=short::$(git rev-parse --short HEAD)"
+      run: echo "::set-output name=short::$(echo ${{ github.event.pull_request.head.sha }})"
     - name: Get branch name
       id: branch
-      run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+      run: echo "::set-output name=branch::$(echo ${{ github.event.pull_request.head.ref }})"
 
     - name: Build image
       if: contains(github.event.comment.html_url, '/pull/') && (contains(github.event.comment.body, '#build-hello-service') || contains(github.event.comment.body, '#deploy-hello-service'))
