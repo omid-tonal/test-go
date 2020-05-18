@@ -9,8 +9,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
+    - run: |
+        git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -25,7 +25,7 @@ jobs:
       run: echo "::set-output name=short::$(echo ${GITHUB_SHA})"
     - name: Get branch name
       id: branch
-      run: echo "::set-output name=branch::$(echo ${GITHUB_HEAD_REF#refs/heads/})"
+      run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
     - name: Get current date
       id: date
       run: |
@@ -46,10 +46,10 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
         # Build and tag a docker image
-        docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
-                                              -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
-        # docker build -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
-        #              -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.        
+        # docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
+        #                                       -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
+        docker build -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
+                     -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.        
         echo "::set-output name=tag::$TAG"
         echo "::set-output name=service::$SERVICE_NAME"
         echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
