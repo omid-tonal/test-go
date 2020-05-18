@@ -17,4 +17,4 @@ hello-service:
       httpGet:
         path: /
         port: 8080
-    initialDelaySeconds: 60
+      initialDelaySeconds: 60
