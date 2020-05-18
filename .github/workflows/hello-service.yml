@@ -74,7 +74,7 @@ jobs:
     - name: New image tag
       run: |
         #change the tag to the new one on values.yaml
-        sed -i 's/tag.*/tag:${{ steps.build.outputs.tag }}/g' ../hello_service/k8s-hello-service/values.yaml
+        sed -i 's/tag.*/tag:${{ steps.build.outputs.tag }}/g' hello_service/k8s-hello-service/values.yaml
     - name: Check for changes
       run: git status
     - name: Stage changed files
