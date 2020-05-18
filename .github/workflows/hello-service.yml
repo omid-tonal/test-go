@@ -32,7 +32,7 @@ jobs:
       run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
 
     - name: Build image
-      if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#build-hello-service')
+      if: contains(github.event.comment.html_url, '/pull/') && (contains(github.event.comment.body, '#build-hello-service') || contains(github.event.comment.body, '#deploy-hello-service'))
       id: build
       env:
         REPO: test-go
