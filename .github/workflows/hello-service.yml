@@ -6,9 +6,12 @@ name: Hello-Service CI
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -32,18 +35,20 @@ jobs:
       if: contains(github.event.comment.html_url, '/pull/') && (contains(github.event.comment.body, '#build-hello-service') || contains(github.event.comment.body, '#deploy-hello-service'))
       id: build
       env:
-        REPO: test-go
+        # REPO: test-go
         SERVICE_NAME: hello-service
         LATEST_TAG: latest
         TAG: ${{steps.date.outputs.date}}-${{steps.commit.outputs.short}}
-        GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
-        BRANCH: ${{steps.branch.outputs.branch}}
-        COMMIT: ${{steps.commit.outputs.short}}
+        # GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
+        # BRANCH: ${{steps.branch.outputs.branch}}
+        # COMMIT: ${{steps.commit.outputs.short}}
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
         # Build and tag a docker image
-        docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
-                                              -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
+        # docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
+        #                                       -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
+        docker build -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
+                     -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.        
         echo "::set-output name=tag::$TAG"
         echo "::set-output name=service::$SERVICE_NAME"
         echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
