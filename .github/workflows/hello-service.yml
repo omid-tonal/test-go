@@ -8,7 +8,6 @@ name: Hello-Service CI
 
 jobs:
   build:
-    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#build-hello-service')
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -33,6 +32,7 @@ jobs:
       run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
 
     - name: Build image
+      if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#build-hello-service')
       id: build
       env:
         REPO: test-go
@@ -72,9 +72,10 @@ jobs:
         echo "Docker image tag for ${{ steps.build.outputs.service }}: ${{ steps.build.outputs.tag }}"
    
     - name: Change the image tag
+      if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#deploy-hello-service')
       run: |
         #change the tag to the new one on values.yaml
-        sed -i 's/tag.*/tag:${{ steps.build.outputs.tag }}/g' hello_service/k8s-hello-service/values.yaml
+        sed -i 's/tag.*/tag: ${{ steps.build.outputs.tag }}/g' hello_service/k8s-hello-service/values.yaml
     - name: Check for changes
       run: git status
     - name: Commit changed files
