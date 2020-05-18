@@ -1,10 +1,14 @@
 on:
+  pull_request:
+    branches:
+      - master
   issue_comment:
     types: [created] 
-name: CI 
+name: Hello-Service CI 
 
 jobs:
   build:
+    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#build-hello-service')
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -27,10 +31,9 @@ jobs:
     - name: Get branch name
       id: branch
       run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
-#hello-service      
-    - uses: khan/pull-request-comment-trigger@master
-      name: Build and Push hello-service
-      id: hello-service
+
+    - name: Build image
+      id: build
       env:
         REPO: test-go
         SERVICE_NAME: hello-service
@@ -40,9 +43,7 @@ jobs:
         BRANCH: ${{steps.branch.outputs.branch}}
         COMMIT: ${{steps.commit.outputs.short}}
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      with:
-        trigger: '#hello-service'
-    - run: |
+      run: |
         # Build and tag a docker image
         docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
                                               -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
@@ -50,6 +51,17 @@ jobs:
         echo "::set-output name=service::$SERVICE_NAME"
         echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
         echo "::set-output name=latest-tag::$ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG"
+
+    # - name: Scan image
+    #   id: scan-image
+    #   uses: anchore/scan-action@master
+    #   with:
+    #     image-reference: ${{ steps.build.outputs.image }}
+    #     fail-build: true      
+
+    - name: Push image
+      id: push     
+      run: |
         # push docker image to ECR
         docker push ${{ steps.build.outputs.image }}
         docker push ${{ steps.build.outputs.latest-tag }}
@@ -58,68 +70,18 @@ jobs:
         echo "kubectl set image deployment/prod-${{ steps.build.outputs.service }} prod-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n prod"
         echo ""
         echo "Docker image tag for ${{ steps.build.outputs.service }}: ${{ steps.build.outputs.tag }}"
-      if: steps.hello-service.outputs.triggered == 'true'
-#test-service    
-    - uses: khan/pull-request-comment-trigger@master
-      name: build test-service    
-      id: test-service
-      with:
-        trigger: '#test-service'
-    - run: 'echo Found test-service!'
-      if: steps.test-service.outputs.triggered == 'true'
-  # hello-service:
-  #   needs: pre-build
-  #   if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#build hello-service')
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: build image
-  #     id: build
-  #     env:
-  #       REPO: test-go
-  #       SERVICE_NAME: hello-service
-  #       LATEST_TAG: latest
-  #       TAG: ${{steps.date.outputs.date}}-${{steps.commit.outputs.short}}
-  #       GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
-  #       BRANCH: ${{steps.branch.outputs.branch}}
-  #       COMMIT: ${{steps.commit.outputs.short}}
-  #       ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #     run: |
-  #       # Build and tag a docker image
-  #       docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
-  #                                             -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
-  #       echo "::set-output name=tag::$TAG"
-  #       echo "::set-output name=service::$SERVICE_NAME"
-  #       echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
-  #       echo "::set-output name=latest-tag::$ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG"
-
-    # - name: scan image
-    #   id: scan-image
-    #   uses: anchore/scan-action@master
-    #   with:
-    #     image-reference: ${{ steps.build.outputs.image }}
-    #     fail-build: true      
-    # - name: push image
-    #   id: push     
-    #   run: |
-    #     # push docker image to ECR
-    #     docker push ${{ steps.build.outputs.image }}
-    #     docker push ${{ steps.build.outputs.latest-tag }}
-    #     echo "kubectl set image deployment/dev-${{ steps.build.outputs.service }} dev-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n dev"
-    #     echo "kubectl set image deployment/qa-${{ steps.build.outputs.service }} qa-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n qa"
-    #     echo "kubectl set image deployment/prod-${{ steps.build.outputs.service }} prod-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n prod"
-    #     echo ""
-    #     echo "Docker image tag for ${{ steps.build.outputs.service }}: ${{ steps.build.outputs.tag }}"
-    # - name: change the tag
-    #   run: |
-    #     #change the tag to the new one on values.yaml
-    #     sed -i 's/tag.*/tag:${{ steps.build.outputs.latest-tag }}/g' ../hello_service/k8s-hello-service/values.yaml
-    # - name: check for changes
-    #   run: git status
-    # - name: stage changed files
-    #   run: git add hello_service/k8s-hello-service/.
-    # - name: commit changed files
-    #   run: git commit -m "Auto updating tag on values.yaml"
-    # - name: fetch from master
-    #   run: git fetch origin master
-    # - name: push code to master
-    #   run: git push origin HEAD:master  
+   
+    - name: New image tag
+      run: |
+        #change the tag to the new one on values.yaml
+        sed -i 's/tag.*/tag:${{ steps.build.outputs.tag }}/g' ../hello_service/k8s-hello-service/values.yaml
+    - name: Check for changes
+      run: git status
+    - name: Stage changed files
+      run: git add hello_service/k8s-hello-service/.
+    - name: Commit changed files
+      run: git commit -m "Auto updating tag on values.yaml"
+    - name: Fetch from master
+      run: git fetch origin master
+    - name: Push code to master
+      run: git push origin HEAD:master 
