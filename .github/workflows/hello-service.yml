@@ -71,16 +71,18 @@ jobs:
         echo ""
         echo "Docker image tag for ${{ steps.build.outputs.service }}: ${{ steps.build.outputs.tag }}"
    
-    - name: New image tag
+    - name: Change the image tag
       run: |
         #change the tag to the new one on values.yaml
         sed -i 's/tag.*/tag:${{ steps.build.outputs.tag }}/g' hello_service/k8s-hello-service/values.yaml
     - name: Check for changes
       run: git status
-    - name: Stage changed files
-      run: git add hello_service/k8s-hello-service/.
     - name: Commit changed files
-      run: git commit -m "Auto updating tag on values.yaml"
+      run: |
+        git add hello_service/k8s-hello-service/.
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git commit -m "Auto updating tag on values.yaml"
     - name: Fetch from master
       run: git fetch origin master
     - name: Push code to master
