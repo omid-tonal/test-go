@@ -12,8 +12,8 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
       run: | 
-        echo $GITHUB_HEAD_REF
-        echo $GITHUB_SHA
+        echo "echo ${GITHUB_HEAD_REF}"
+        echo "echo ${GITHUB_SHA}"
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
