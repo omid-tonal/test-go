@@ -24,6 +24,6 @@ RUN apk --no-cache add ca-certificates
 
 COPY --from=builder /hello_service ./
 
-EXPOSE  8092
+EXPOSE  8080
 
 ENTRYPOINT ["./hello_service"]
