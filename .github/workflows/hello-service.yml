@@ -5,13 +5,11 @@ name: Hello-Service CI
 
 jobs:
   build:
+    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#deploy-hello-service') && github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true  
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-      with:
-        fetch-depth: 20
-    - run: git checkout HEAD^
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -34,7 +32,6 @@ jobs:
         echo "${{steps.commit.outputs.short}}"
         echo "${{steps.branch.outputs.branch}}"
     - name: Build image
-      if: contains(github.event.comment.html_url, '/pull/') && (contains(github.event.comment.body, '#build-hello-service') || contains(github.event.comment.body, '#deploy-hello-service'))
       id: build
       env:
         REPO: test-go
@@ -80,7 +77,6 @@ jobs:
         #change the tag to the new one on values.yaml
         sed -i 's/tag.*/tag: ${{ steps.build.outputs.tag }}/g' hello_service/k8s-hello-service/values.yaml
     - name: Commit and push changed files
-      if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#deploy-hello-service')
       run: |
         git status
         git add hello_service/k8s-hello-service/.
