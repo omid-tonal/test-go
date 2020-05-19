@@ -1,0 +1,6 @@
+dependencies:
+- name: app-ingress
+  repository: https://tonal-charts.tws.tonal.com
+  version: 1.0.0
+digest: sha256:899460f29dde83857d6255298382ef8b502b6277c70f45630bb1c12622a1c8da
+generated: "2020-05-11T19:46:50.756512-07:00"

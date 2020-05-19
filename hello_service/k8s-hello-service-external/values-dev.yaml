@@ -1,0 +1,5 @@
+global:
+  env: dev 
+hello-service:  
+  nginx:
+    host: hello.tws.tonal.com
