@@ -1,7 +1,6 @@
 on:
-  push:
-    branches:
-      - master
+  pull_request:
+    types: [closed]
   issue_comment:
     types: [created] 
 name: Hello-Service CI 
@@ -24,16 +23,13 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
     - name: Get short commit
       id: commit
-      run: echo "::set-output name=short::$(echo ${GITHUB_SHA})"
+      run: echo "::set-output name=short::$(echo ${git rev-parse --short HEAD})"
     - name: Get branch name
       id: branch
-      run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/pull/:prNumber/merge})"
+      run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
     - name: Get current date
       id: date
-      run: |
-        echo "::set-output name=date::$(date +'%F')"
-        echo "${{steps.commit.outputs.short}}"
-        echo "${{steps.branch.outputs.branch}}"
+      run: echo "::set-output name=date::$(date +'%F')"
     - name: Build image
       id: build
       env:
@@ -47,34 +43,24 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
         # Build and tag a docker image
-        # docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
-        #                                       -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
-        docker build -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
-                     -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.        
+        docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
+                                              -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.      
         echo "::set-output name=tag::$TAG"
         echo "::set-output name=service::$SERVICE_NAME"
         echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
         echo "::set-output name=latest-tag::$ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG"
-
     # - name: Scan image
     #   id: scan-image
     #   uses: anchore/scan-action@master
     #   with:
     #     image-reference: ${{ steps.build.outputs.image }}
     #     fail-build: true      
-
     - name: Push image
       id: push     
       run: |
         # push docker image to ECR
         docker push ${{ steps.build.outputs.image }}
         docker push ${{ steps.build.outputs.latest-tag }}
-        echo "kubectl set image deployment/dev-${{ steps.build.outputs.service }} dev-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n dev"
-        echo "kubectl set image deployment/qa-${{ steps.build.outputs.service }} qa-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n qa"
-        echo "kubectl set image deployment/prod-${{ steps.build.outputs.service }} prod-${{ steps.build.outputs.service }}=${{ steps.build.outputs.image }} -n prod"
-        echo ""
-        echo "Docker image tag for ${{ steps.build.outputs.service }}: ${{ steps.build.outputs.tag }}"
-   
     - name: Change the image tag
       run: |
         #change the tag to the new one on values.yaml
