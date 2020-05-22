@@ -70,7 +70,8 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -m "Auto updating image tag:${{ steps.build.outputs.tag }}"
-    - name: Fetch from master
-      run: git fetch origin master
-    - name: Push code to master
-      run: git push origin HEAD:master
+    - name: Push changes
+      if: github.ref == 'refs/heads/master'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.CI_TOKEN }}
