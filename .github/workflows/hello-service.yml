@@ -4,7 +4,7 @@ on:
 name: Hello-Service CI 
 jobs:
   build:
-    if: github.event.pull_request.merged == 'true' && contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#deploy-hello-service')
+    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#deploy-hello-service')
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -65,6 +65,7 @@ jobs:
     - name: Check for changes
       run: git status
     - name: Commit changed files
+      if: github.event.pull_request.merged == 'true'
       run: |
         git add hello_service/k8s-hello-service/.
         git config --local user.email "action@github.com"
