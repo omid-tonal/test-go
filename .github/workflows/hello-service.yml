@@ -4,7 +4,7 @@ on:
 name: Hello-Service CI 
 jobs:
   build:
-    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#deploy-hello-service') && (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true)
+    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#deploy-hello-service') && contains(github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
