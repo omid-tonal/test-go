@@ -1,10 +1,13 @@
 on:
+  push:
+    branches:
+      - master
+      - prod/hello-service
   issue_comment:
-    types: [created]   
+    types: [created]
 name: Hello-Service CI 
 jobs:
-  build:
-    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#deploy-hello-service')
+  merged:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -27,17 +30,22 @@ jobs:
     - name: Get branch name
       id: branch
       run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+  build:
+    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#build-hello-service') || contains(github.event.comment.body, '#deploy-hello-service')
+    runs-on: ubuntu-latest
+    needs: merged
+    steps:      
     - name: Build image
       id: build
       env:
         REPO: test-go
         SERVICE_NAME: hello-service
         LATEST_TAG: latest
-        TAG: ${{steps.date.outputs.date}}-${{steps.commit.outputs.short}}
+        TAG: ${{needs.merged.outputs.date}}-${{needs.merged.outputs.short}}
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
-        BRANCH: ${{steps.branch.outputs.branch}}
-        COMMIT: ${{steps.commit.outputs.short}}
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        BRANCH: ${{needs.merged.outputs.branch}}
+        COMMIT: ${{needs.merged.outputs.short}}
+        ECR_REGISTRY: ${{ needs.merged.outputs.registry }}
       run: |
         # Build and tag a docker image
         docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
@@ -58,19 +66,24 @@ jobs:
         # push docker image to ECR
         docker push ${{ steps.build.outputs.image }}
         docker push ${{ steps.build.outputs.latest-tag }}
+  deploy:
+    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#deploy-hello-service')
+    runs-on: ubuntu-latest
+    needs: build
+    steps:          
     - name: Change the image tag
       run: |
         #change the tag to the new one on values.yaml
-        sed -i 's/tag.*/tag: ${{ steps.build.outputs.tag }}/g' hello_service/k8s-hello-service/values.yaml
+        sed -i 's/tag.*/tag: ${{ needs.build.outputs.tag }}/g' hello_service/k8s-hello-service/values.yaml
     - name: Check for changes
       run: git status
     - name: Commit changed files
-      if: github.event.pull_request.merged == 'true'
+
       run: |
         git add hello_service/k8s-hello-service/.
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git commit -m "Auto updating image tag:${{ steps.build.outputs.tag }}"
+        git commit -m "Auto updating image tag:${{ needs.build.outputs.tag }}"
     - name: Push changes
       if: github.ref == 'refs/heads/master'
       uses: ad-m/github-push-action@master
