@@ -1,26 +1,26 @@
 on:
-  push:
-    branches:
-      - master
-      - prod/hello-service
   issue_comment:
     types: [created]
 name: Hello-Service CI 
 jobs:
   merged:
+    if: github.event.issue.pull_request != '' && contains(github.event.comment.body, '#deploy-hello-service')
     runs-on: ubuntu-latest
+    outputs:
+      ecr: ${{ steps.login-ecr.outputs.registry }}
+      data: ${{steps.date.outputs.date}
+      commit: ${{steps.commit.outputs.short}
+      branch: ${{steps.branch.outputs.branch}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-west-2
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: us-west-2
     - name: Get current date
       id: date
       run: echo "::set-output name=date::$(date +'%F')"
@@ -30,9 +30,12 @@ jobs:
     - name: Get branch name
       id: branch
       run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+  
   build:
-    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#build-hello-service') || contains(github.event.comment.body, '#deploy-hello-service')
+    if: github.event.pull_request.merged == 'true'
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.build.outputs.tag }}
     needs: merged
     steps:      
     - name: Build image
@@ -41,11 +44,11 @@ jobs:
         REPO: test-go
         SERVICE_NAME: hello-service
         LATEST_TAG: latest
-        TAG: ${{needs.merged.outputs.date}}-${{needs.merged.outputs.short}}
+        TAG: ${{needs.merged.outputs.date}}-${{needs.merged.outputs.commit}}
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
         BRANCH: ${{needs.merged.outputs.branch}}
-        COMMIT: ${{needs.merged.outputs.short}}
-        ECR_REGISTRY: ${{ needs.merged.outputs.registry }}
+        COMMIT: ${{needs.merged.outputs.commit}}
+        ECR_REGISTRY: ${{ needs.merged.outputs.ecr }}
       run: |
         # Build and tag a docker image
         docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
@@ -67,7 +70,7 @@ jobs:
         docker push ${{ steps.build.outputs.image }}
         docker push ${{ steps.build.outputs.latest-tag }}
   deploy:
-    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '#deploy-hello-service')
+    if: github.event.pull_request.merged == 'true'
     runs-on: ubuntu-latest
     needs: build
     steps:          
