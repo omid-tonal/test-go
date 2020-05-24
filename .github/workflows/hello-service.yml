@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ecr: ${{ steps.login-ecr.outputs.registry }}
-      data: ${{steps.date.outputs.date}
-      commit: ${{steps.commit.outputs.short}
-      branch: ${{steps.branch.outputs.branch}
+      data: ${{steps.date.outputs.date}}
+      commit: ${{steps.commit.outputs.short}}
+      branch: ${{steps.branch.outputs.branch}}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
