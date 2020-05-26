@@ -1,11 +1,12 @@
 on:
-  issue_comment:
-    types: [created]
+  push:
+    branches:
+      - master
 name: Hello-Service CI 
 jobs:
   merged:
-    if: github.event.issue.pull_request != '' && contains(github.event.comment.body, '#deploy-hello-service')
     runs-on: ubuntu-latest
+    if: github.event.issue.pull_request != '' && contains(github.event.comment.body, '#deploy-hello-service')
     outputs:
       ecr: ${{ steps.login-ecr.outputs.registry }}
       data: ${{steps.date.outputs.date}}
@@ -30,9 +31,7 @@ jobs:
     - name: Get branch name
       id: branch
       run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
-  
   build:
-    if: github.event.pull_request.merged == 'true'
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.build.outputs.tag }}
