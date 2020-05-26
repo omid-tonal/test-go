@@ -31,9 +31,9 @@ jobs:
           AWS_REGION: us-west-2
       - name: Image tag
         id: tag
-        run: echo "::set-output name=tag::$(date +'%F')-$(git rev-parse --short HEAD)"    
+        run: echo "::set-output name=tag::$(date +'%F')-$(git rev-parse --short HEAD)"
       - name: Build image
-          id: build
+        id: build
         env: 
           BRANCH: ${{ steps.prcomm.outputs.BRANCH_NAME }}
           COMMIT: ${{ steps.prcomm.outputs.SHA }}
