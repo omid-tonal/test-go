@@ -51,3 +51,9 @@ jobs:
           # push docker image to ECR
           docker push ${{ steps.build.outputs.image }}:${{steps.tag.outputs.tag}}
           docker push ${{ steps.build.outputs.image }}:latest
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.CI_TOKEN }} 
+          event-type: hello-service
+          client-payload: '{"tag": "${{steps.tag.outputs.tag}}"}'
