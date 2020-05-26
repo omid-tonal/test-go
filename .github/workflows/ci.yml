@@ -12,9 +12,7 @@ jobs:
       - name: Listen for PR Comments
         uses: machine-learning-apps/actions-chatops@master
         with:
-          TRIGGER_PHRASE: "/build-hello-service"
-        env:
-          GITHUB_TOKEN: ${{ secrets.CI_TOKEN }} 
+          TRIGGER_PHRASE: "/deploy-hello-service"
         id: prcomm
         # This step clones the branch of the PR associated with the triggering phrase, but only if it is triggered.
       - name: Clone branch of PR
