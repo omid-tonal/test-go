@@ -12,7 +12,7 @@ jobs:
       - name: Listen for PR Comments
         uses: machine-learning-apps/actions-chatops@master
         with:
-          TRIGGER_PHRASE: "/deploy-hello-service"
+          TRIGGER_PHRASE: "/build-hello-service"
         env:
           GITHUB_TOKEN: ${{ secrets.CI_TOKEN }} 
         id: prcomm
@@ -51,21 +51,3 @@ jobs:
           # push docker image to ECR
           docker push ${{ steps.build.outputs.image }}:${{steps.tag.outputs.tag}}
           docker push ${{ steps.build.outputs.image }}:latest
-      - name: Change the image tag
-        run: |
-          #change the tag to the new one on values.yaml
-          sed -i 's/tag.*/tag: ${{ steps.build.outputs.tag }}/g' hello_service/k8s-hello-service/values.yaml
-      - name: Check for changes
-        run: git status
-      - name: Commit changed files
-
-        run: |
-          git add hello_service/k8s-hello-service/.
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git commit -m "Auto updating image tag:${{ steps.build.outputs.tag }}"
-      - name: Push changes
-        if: github.ref == 'refs/heads/master'
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.CI_TOKEN }}
