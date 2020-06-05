@@ -14,7 +14,6 @@ jobs:
       - name: Get tag
         id: gtag
         uses: dawidd6/action-get-tag@v1
-      - name: Use tag
       - name: Clone the tag
         uses: actions/checkout@master
         with:
