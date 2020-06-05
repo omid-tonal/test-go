@@ -1,8 +1,9 @@
-name: hello-service-tag ci
-on: 
+
+on:
   push:
     tags:
-      - 'r-hello-service*'
+      - 'r-hello-service-v*'
+name: hello-service-tag ci      
 jobs:
   hello-service:
     runs-on: ubuntu-latest
@@ -15,7 +16,7 @@ jobs:
         id: gtag
         uses: dawidd6/action-get-tag@v1
       - name: Clone the tag
-        uses: actions/checkout@master
+        uses: actions/checkout@v2
         with:
           ref: ${{ steps.gtag.outputs.tag }}
       - name: Login to Amazon ECR
