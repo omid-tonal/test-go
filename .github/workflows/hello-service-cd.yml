@@ -1,0 +1,27 @@
+name: Hello-Service CD
+on:
+  repository_dispatch:
+    types: [deploy-hello-service]
+jobs:
+  hello-service:
+    runs-on: ubuntu-latest 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2    
+      - name: Change the image tag
+        run: |
+          #change the tag to the new one on values.yaml
+          sed -i 's/tag.*/tag: ${{ github.event.client_payload.tag }}/g' hello_service/k8s-hello-service/values.yaml
+      - name: Check for changes
+        run: git status
+      - name: Commit changed files
+        run: |
+          git add hello_service/k8s-hello-service/.
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "Auto updating image tag:${{ github.event.client_payload.tag }}"
+      - name: Push changes
+        if: github.ref == 'refs/heads/master'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.CI_TOKEN }}
