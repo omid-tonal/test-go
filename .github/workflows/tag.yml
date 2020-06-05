@@ -15,13 +15,8 @@ jobs:
       SERVICE_NAME: hello-service
       GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}   
     steps:
-      - name: Get tag
-        id: gtag
-        uses: dawidd6/action-get-tag@v1
       - name: Clone the tag
         uses: actions/checkout@v2
-        with:
-          ref: ${{ steps.gtag.outputs.tag }}
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
