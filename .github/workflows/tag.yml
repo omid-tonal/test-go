@@ -3,9 +3,12 @@ on:
   push:
     tags:
       - 'r-hello-service-v*'
+  release:
+    types: [created]     
 name: hello-service-tag ci      
 jobs:
   hello-service:
+    if: github.ref == 'ref/head/r-hello-service-v*'
     runs-on: ubuntu-latest
     env:
       REPO: test-go
