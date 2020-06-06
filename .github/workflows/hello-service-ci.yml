@@ -1,7 +1,8 @@
 name: Hello-Service CI 
 on:
-  repository_dispatch:
-    types: [build-hello-service]
+  push:
+    tags:
+      - 'hello-service*'
 jobs:
   hello-service:
     runs-on: ubuntu-latest
@@ -9,8 +10,6 @@ jobs:
 # Checkout from hello-service tag and create an image and push it to ecr   
     - name: Checkout
       uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.client_payload.github_tag }}
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
