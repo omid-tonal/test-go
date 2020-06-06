@@ -1,39 +1,37 @@
 name: Tagged
-on:
-  release:
-    types: [created]
+on: [release, push]
 jobs:
 #Find a tag related to hello-service release
   hello-service:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Find Tag
-        id: tagger
-        uses: jimschubert/query-tag-action@v1
-        with:
-          include: 'hello-service-v*'
-      - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v1
-        with:
-          token: ${{ secrets.CI_TOKEN }} 
-          event-type: build-hello-service
-          client-payload: '{"github-tag": "${{steps.tagger.outputs.tag}}"}'
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Find Tag
+      id: tagger
+      uses: jimschubert/query-tag-action@v1
+      with:
+        include: 'hello-service-v*'
+    - name: Repository Dispatch
+      uses: peter-evans/repository-dispatch@v1
+      with:
+        token: ${{ secrets.CI_TOKEN }} 
+        event-type: build-hello-service
+        client-payload: '{"github-tag": "${{steps.tagger.outputs.tag}}"}'
 #Find a tag related to user-service release        
   user-service:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Find Tag
-        id: tagger
-        uses: jimschubert/query-tag-action@v1
-        with:
-          include: 'r-user-service-v*'
-      - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v1
-        with:
-          token: ${{ secrets.CI_TOKEN }} 
-          event-type: build-user-service
-          client-payload: '{"github-tag": "${{steps.tagger.outputs.tag}}"}'        
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Find Tag
+      id: tagger
+      uses: jimschubert/query-tag-action@v1
+      with:
+        include: 'user-service-v*'
+    - name: Repository Dispatch
+      uses: peter-evans/repository-dispatch@v1
+      with:
+        token: ${{ secrets.CI_TOKEN }} 
+        event-type: build-user-service
+        client-payload: '{"github-tag": "${{steps.tagger.outputs.tag}}"}'        
