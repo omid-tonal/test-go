@@ -1,0 +1,59 @@
+on:
+  push:
+    branches:
+      - prod/hello-service
+name: Hello-Service CI 
+jobs:
+  merged:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: prod/hello-service
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: us-west-2
+      - name: Image tag
+        id: tag
+        run: echo "::set-output name=tag::$(date +'%F')-$(git rev-parse --short HEAD)"
+      - name: Build image
+        id: build
+        env: 
+          BRANCH: ${{ steps.prcomm.outputs.BRANCH_NAME }}
+          COMMIT: ${{ steps.prcomm.outputs.SHA }}
+          ECR: ${{ steps.login-ecr.outputs.registry }}
+          TAG: ${{steps.tag.outputs.tag}}
+        run: |
+          # Build and tag a docker image
+          docker build --no-cache --build-arg GITHUB_TOKEN  --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR/$SERVICE_NAME:latest \
+                                                -t $ECR/$SERVICE_NAME:$TAG hello_service/.
+          echo "::set-output name=tag::$(date +'%F')-$(git rev-parse --short HEAD)"
+          echo "::set-output name=image::$ECR/$SERVICE_NAME" 
+      - name: Push image
+        id: push
+        run: |
+          # push docker image to ECR
+          docker push ${{ steps.build.outputs.image }}:${{steps.tag.outputs.tag}}
+          docker push ${{ steps.build.outputs.image }}:latest
+      - name: Change the image tag
+        run: |
+          #change the tag to the new one on values.yaml
+          sed -i 's/tag.*/tag: ${{ github.event.client_payload.tag }}/g' hello_service/k8s-hello-service/values.yaml
+      - name: Check for changes
+        run: git status
+      - name: Commit changed files
+        run: |
+          git add hello_service/k8s-hello-service/.
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "Auto updating image tag:${{ github.event.client_payload.tag }}"
+      - name: Push changes
+        if: github.ref == 'refs/heads/prod/hello-service'
+        uses: ad-m/github-push-action@prod/hello-service
+        with:
+          github_token: ${{ secrets.CI_TOKEN }}
