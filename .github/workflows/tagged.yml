@@ -12,6 +12,7 @@ jobs:
       uses: jimschubert/query-tag-action@v1
       with:
         include: 'hello-service-v*'
+        skip-unshallow: 'true'
     - name: Repository Dispatch
       uses: peter-evans/repository-dispatch@v1
       with:
