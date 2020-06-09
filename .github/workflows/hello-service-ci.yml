@@ -6,10 +6,16 @@ on:
 jobs:
   hello-service:
     runs-on: ubuntu-latest
+    env:
+      REPO: test-go
+      SERVICE_NAME: hello-service
+      GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}       
     steps:
 # Checkout from hello-service tag and create an image and push it to ecr   
     - name: Checkout
       uses: actions/checkout@v2
+      with:
+          token: ${{ secrets.CI_TOKEN }}
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
