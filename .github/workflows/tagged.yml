@@ -1,38 +1,18 @@
-name: Tagged
-on: [release, push]
+on:
+  push:
+    tags:
+      - 'v*.*.*'
 jobs:
-#Find a tag related to hello-service release
-  hello-service:
+  test:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Find Tag
-      id: tagger
-      uses: jimschubert/query-tag-action@v1
-      with:
-        include: 'hello-service-v*'
-        skip-unshallow: 'true'
-    - name: Repository Dispatch
-      uses: peter-evans/repository-dispatch@v1
-      with:
-        token: ${{ secrets.CI_TOKEN }} 
-        event-type: build-hello-service
-        client-payload: '{"github-tag": "${{steps.tagger.outputs.tag}}"}'
-#Find a tag related to user-service release        
-  user-service:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Find Tag
-      id: tagger
-      uses: jimschubert/query-tag-action@v1
-      with:
-        include: 'user-service-v*'
-    - name: Repository Dispatch
-      uses: peter-evans/repository-dispatch@v1
-      with:
-        token: ${{ secrets.CI_TOKEN }} 
-        event-type: build-user-service
-        client-payload: '{"github-tag": "${{steps.tagger.outputs.tag}}"}'        
+      - uses: actions/checkout@v1
+      - name: Set output
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+      - name: Check output
+        env:
+          RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
+        run: |
+          echo $RELEASE_VERSION
+          echo ${{ steps.vars.outputs.tag }}       
