@@ -1,15 +1,27 @@
 on:
-  issue_comment:
-    types: [created]
-name: Hello-Service CI 
+  push:
+    paths:
+      - hello_service/**  
+          
+name: Hello-Service 
 jobs:
-  merged:
-    if: github.event.issue.pull_request != '' && contains(github.event.comment.body, '#deploy-hello-service')
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest    
     steps:
+# Checkout from hello-service tag and create an image and push it to ecr   
     - name: Checkout
       uses: actions/checkout@v2
-      if: github.event.pull_request.merged == 'true'
+      with:
+          token: ${{ secrets.CI_TOKEN }}
+    - name: Git info
+      id: git
+      run: |
+        REPO=$(pwd | awk -F / '{print $(NF -1)}')
+        BRANCH=$(git branch | grep \* | cut -d ' ' -f2)
+        COMMIT=$(git rev-parse --short HEAD)
+        echo "::set-output name=repo::$REPO"
+        echo "::set-output name=branch::$BRANCH"
+        echo "::set-output name=commit::$COMMIT"                    
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
@@ -17,61 +29,46 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: us-west-2
-    - name: Get current date
-      id: date
-      run: echo "::set-output name=date::$(date +'%F')"
-    - name: Get short commit
-      id: commit
-      run: echo "::set-output name=short::$(git rev-parse --short HEAD)"
-    - name: Get branch name
-      id: branch
-      run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
-    
     - name: Build image
       id: build
       env:
-        REPO: test-go
-        SERVICE_NAME: hello-service
-        LATEST_TAG: latest
-        TAG: ${{steps.date.outputs.date}}-${{steps.commit.outputs.short}}
+        SERVICE_NAME: hello-service 
+        REPO: ${{ steps.git.outputs.repo }}
+        BRANCH: ${{ steps.git.outputs.branch }}
+        COMMIT: ${{ steps.git.outputs.commit }}
+        ECR: ${{ steps.login-ecr.outputs.registry }}
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
-        BRANCH: ${{ steps.branch.outputs.branch }}
-        COMMIT: ${{ steps.commit.outputs.short }}
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
+        if [[ $BRANCH != "master" ]]; then
+          TAG=dev-t$(date "+%F")-${{ steps.git.outputs.commit }}
+          LATEST_TAG=dev-latest
+        else
+          TAG=t$(date "+%F")-${{ steps.git.outputs.commit }}
+          LATEST_TAG=latest  
+        fi
         # Build and tag a docker image
-        docker build --no-cache --build-arg GITHUB_TOKEN --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG \
-                                              -t $ECR_REGISTRY/$SERVICE_NAME:$TAG hello_service/.
+        docker build --no-cache --build-arg GITHUB_TOKEN  --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR/$SERVICE_NAME:$LATEST_TAG \
+                                              -t $ECR/$SERVICE_NAME:$TAG hello_service/.
         echo "::set-output name=tag::$TAG"
-        echo "::set-output name=service::$SERVICE_NAME"
-        echo "::set-output name=image::$ECR_REGISTRY/$SERVICE_NAME:$TAG"
-        echo "::set-output name=latest-tag::$ECR_REGISTRY/$SERVICE_NAME:$LATEST_TAG"
-    # - name: Scan image
-    #   id: scan-image
-    #   uses: anchore/scan-action@master
-    #   with:
-    #     image-reference: ${{ steps.build.outputs.image }}
-    #     fail-build: true      
+        echo "::set-output name=latest::$LATEST_TAG"
+        echo "::set-output name=image::$ECR/$SERVICE_NAME" 
     - name: Push image
-      id: push     
+      id: push
       run: |
         # push docker image to ECR
-        docker push ${{ steps.build.outputs.image }}
-        docker push ${{ steps.build.outputs.latest-tag }}
-        
-    - name: Change the image tag
-      run: |
-        #change the tag to the new one on values.yaml
-        sed -i 's/tag.*/tag: ${{ steps.build.outputs.tag }}/g' hello_service/k8s-hello-service/values.yaml
-    - name: Check for changes
-      run: git status
-    - name: Commit changed files
+        docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.tag}}
+        docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.latest}}
 
+    - name: Change the image tag on master
+      if: github.ref == 'refs/heads/master'
       run: |
+        #change the deployment tag
+        sed -i 's/tag.*/tag: ${{steps.build.outputs.tag}}/g' hello_service/k8s-hello-service/values.yaml
+        git status
         git add hello_service/k8s-hello-service/.
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git commit -m "Auto updating image tag:${{ steps.build.outputs.tag }}"
+        git commit -m "Auto updating image tag:${{steps.build.outputs.tag}}"
     - name: Push changes
       if: github.ref == 'refs/heads/master'
       uses: ad-m/github-push-action@master
