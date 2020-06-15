@@ -1,9 +1,8 @@
 on:
   push:
     paths:
-      - hello_service/**  
-    paths-ignore:
-      - hello_service/k8s-hello-service/values.yaml
+      - 'hello_service/**'
+      - '!hello_service/k8s-hello-service/values.yaml'
           
 name: hello-service 
 jobs:
