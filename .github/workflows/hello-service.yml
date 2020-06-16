@@ -66,7 +66,7 @@ jobs:
         docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.tag}}
         docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.latest}}
     - name: Change the deployment tag on master
-      if: ${{ steps.git.outputs.prefix }} == "master"
+      if: github.ref == 'refs/heads/master'
       run: |
         #change the deployment tag on master
         sed -i 's/tag.*/tag: ${{steps.build.outputs.tag}}/g' hello_service/k8s-hello-service/values.yaml
@@ -76,7 +76,7 @@ jobs:
         git config --local user.name "GitHub Action"
         git commit -m "Auto updating image tag:${{steps.build.outputs.tag}}"
     - name: Push changes to master
-      if: ${{ steps.git.outputs.prefix }} == "master"
+      if: github.ref == 'refs/heads/master'
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.CI_TOKEN }}
