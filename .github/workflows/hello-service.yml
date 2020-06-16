@@ -2,7 +2,8 @@ on:
   push:
     paths:
       - 'hello_service/**'
-      - '!hello_service/k8s-hello-service/values.yaml'
+      - '!hello_service/k8s-hello-service/**'
+      - '!hello_service/k8s-hello-service-external/**'
           
 name: hello-service 
 jobs:
@@ -32,7 +33,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: us-west-2
     - name: Build image
-      # we don't create a image for prod branch we just promote the image    
+      # we don't create a image for prod branch, we just promote the image.   
       if: ${{ steps.git.outputs.prefix }} != "prod"
       id: build
       env:
