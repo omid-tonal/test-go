@@ -2,7 +2,8 @@ on:
   push:
     paths:
       - 'hello_service/**'
-      - '!hello_service/k8s-hello-service/values.yaml'
+      - '!hello_service/k8s-hello-service/**'
+      - '!hello_service/k8s-hello-service-external/**'
           
 name: hello-service 
 jobs:
@@ -32,21 +33,22 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: us-west-2
     - name: Build image
-      # we don't create a image for prod branch we just promote the image    
+      # we don't create a image for prod branch, we just promote the image.   
       if: ${{ steps.git.outputs.prefix }} != "prod"
       id: build
       env:
         SERVICE_NAME: hello-service 
         REPO: ${{ steps.git.outputs.repo }}
         BRANCH: ${{ steps.git.outputs.branch }}
+        BRANCH_PREFIX: ${{ steps.git.outputs.prefix }}
         COMMIT: ${{ steps.git.outputs.commit }}
         ECR: ${{ steps.login-ecr.outputs.registry }}
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
       run: |
        # Create a tag for docker image 
-        if [[ $BRANCH != "master" ]]; then
-          TAG=dev-t$(date "+%F")-${{ steps.git.outputs.commit }}
-          LATEST_TAG=dev-latest
+        if [[ $BRANCH_PREFIX != "master" ]]; then
+          TAG=${BRANCH_PREFIX}-t$(date "+%F")-${{ steps.git.outputs.commit }}
+          LATEST_TAG=${BRANCH_PREFIX}-latest
         else
           TAG=t$(date "+%F")-${{ steps.git.outputs.commit }}
           LATEST_TAG=latest  
@@ -63,9 +65,8 @@ jobs:
         # push docker image to ECR
         docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.tag}}
         docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.latest}}
-
-    - name: Change the image tag on master
-      if: github.ref == 'refs/heads/master'
+    - name: Change the deployment tag on master
+      if: ${{ steps.git.outputs.prefix }} == "master"
       run: |
         #change the deployment tag on master
         sed -i 's/tag.*/tag: ${{steps.build.outputs.tag}}/g' hello_service/k8s-hello-service/values.yaml
@@ -74,8 +75,8 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -m "Auto updating image tag:${{steps.build.outputs.tag}}"
-    - name: Push changes
-      if: github.ref == 'refs/heads/master'
+    - name: Push changes to master
+      if: ${{ steps.git.outputs.prefix }} == "master"
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.CI_TOKEN }}
