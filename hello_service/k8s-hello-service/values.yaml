@@ -1,5 +1,5 @@
 hello-service:
-  replicas: 3
+  replicas: 2
   image:
     name: hello-service
     tag: t2020-06-16-885fdc6
@@ -12,9 +12,9 @@ hello-service:
       httpGet:
         path: /
         port: 8080
-      initialDelaySeconds: 60
+      initialDelaySeconds: 5
     readinessProbe:
       httpGet:
         path: /
         port: 8080
-      initialDelaySeconds: 60
+      initialDelaySeconds: 5
