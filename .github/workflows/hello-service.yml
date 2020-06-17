@@ -58,13 +58,20 @@ jobs:
                                               -t $ECR/$SERVICE_NAME:$TAG hello_service/.
         echo "::set-output name=tag::$TAG"
         echo "::set-output name=latest::$LATEST_TAG"
-        echo "::set-output name=image::$ECR/$SERVICE_NAME" 
+        echo "::set-output name=image::$ECR/$SERVICE_NAME"
+        echo "::set-output name=deploy::kubectl set image deployment/dev-$SERVICE_NAME-$SERVICE_NAME $SERVICE_NAME=$ECR/$SERVICE_NAME:$TAG --namespace=dev" 
     - name: Push image
       id: push
       run: |
         # push docker image to ECR
         docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.tag}}
         docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.latest}}
+    - name: Notify slack
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      uses: pullreminders/slack-action@master
+      with:
+        args: '{\"channel\":\"C015DEMCDK8\",\"text\":\"hello-service\",\"attachments\":[{\"color\":\"#36a64f\",\"fields\":[{\"title\":\"Repo\",\"value\":\"${{ steps.git.outputs.repo }}\",\"short\":true},{\"title\":\"Branch\",\"value\":\"${{ steps.git.outputs.branch }}\",\"short\":true},{\"title\":\"Commit\",\"value\":\"${{ steps.git.outputs.commit }}\",\"short\":true},{\"title\":\"Image Tag\",\"value\":\"${{steps.build.outputs.tag}}\",\"short\":true},{\"title\":\"Deploy on K8S\",\"value\":\"${{steps.build.outputs.deploy}}\",\"short\":false}]}]}'        
     - name: Change the deployment tag on master
       if: github.ref == 'refs/heads/master'
       run: |
