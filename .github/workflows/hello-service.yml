@@ -81,7 +81,7 @@ jobs:
         git add hello_service/k8s-hello-service/.
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git commit -m "Auto updating image tag:${{steps.build.outputs.tag}}"
+        git commit -m "Auto update hello-service tag:${{steps.build.outputs.tag}}"
     - name: Push changes to master
       if: github.ref == 'refs/heads/master'
       uses: ad-m/github-push-action@master
