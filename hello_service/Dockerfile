@@ -11,6 +11,7 @@ ARG GITHUB_TOKEN
 ARG REPO
 ARG BRANCH
 ARG COMMIT
+ARG TEST
 # download from git
 RUN apk --no-cache add git gcc musl-dev \
     && git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/" \
