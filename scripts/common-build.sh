@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function build_service() {
-
+#this script need to be deleted
 echo on
 SERVICE_NAME=$1
 
