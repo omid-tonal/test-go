@@ -75,6 +75,8 @@ jobs:
     - name: Change the deployment tag on master
       if: github.ref == 'refs/heads/master'
       run: |
+        git fetch origin master:tmp
+        git rebase tmp
         #change the deployment tag on master
         sed -i 's/tag.*/tag: ${{steps.build.outputs.tag}}/g' hello_service/k8s-hello-service/values.yaml
         git status
