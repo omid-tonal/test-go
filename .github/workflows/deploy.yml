@@ -11,8 +11,6 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
     - name: Turnstyle
       uses: softprops/turnstyle@v1
-      with:
-        poll-interval-seconds: 120
       env:
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}          
   tag:
@@ -21,7 +19,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-          token: ${{ secrets.CI_TOKEN }}        
+          token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0                 
     - name: Change the service tag on master
       run: |
         sed -i 's/tag.*/tag: ${{ github.event.client_payload.tag }}/g' ${{ github.event.client_payload.service }}/k8s/values.yaml
