@@ -80,6 +80,7 @@ jobs:
     #   with:
     #     args: '{\"channel\":\"C015DEMCDK8\",\"text\":\"Application *hello-service* has been successfully built.\",\"attachments\":[{\"fields\":[{\"title\":\"Repo\",\"value\":\"${{ steps.git.outputs.repo }}\",\"short\":true},{\"title\":\"Branch\",\"value\":\"${{ steps.git.outputs.branch }}\",\"short\":true},{\"title\":\"Commit\",\"value\":\"${{ steps.git.outputs.commit }}\",\"short\":true},{\"title\":\"Image Tag\",\"value\":\"${{steps.build.outputs.tag}}\",\"short\":true},{\"title\":\"Deploy on Dev\",\"value\":\"```${{steps.build.outputs.deploy}}```\",\"short\":false}]}]}'        
     - name: Repository Dispatch
+      if: github.ref == 'refs/heads/master'
       uses: peter-evans/repository-dispatch@v1
       with:
         token: ${{ secrets.CI_TOKEN }}
