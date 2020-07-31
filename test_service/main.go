@@ -11,5 +11,5 @@ func main() {
 }
 
 func TestServer(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Test Tonal v1.0.7 %s!", r.URL.Path[1:])
+	fmt.Fprintf(w, "Test Tonal v1.0.8 %s!", r.URL.Path[1:])
 }
