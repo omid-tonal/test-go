@@ -18,7 +18,7 @@ jobs:
     - name: Turnstyle
       uses: softprops/turnstyle@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
+        GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}          
     - name: Git info
       id: git
       run: |
@@ -82,6 +82,7 @@ jobs:
         event-type: tag-push
         client-payload: '{"tag": "${{steps.build.outputs.tag}}"}'
   tag:
+    needs: ci
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
