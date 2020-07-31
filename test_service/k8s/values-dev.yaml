@@ -1,0 +1,5 @@
+global:
+  env: dev 
+test-service:
+  replicas: 1
+

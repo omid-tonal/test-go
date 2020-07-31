@@ -1,0 +1,5 @@
+global:
+  env: dev 
+test-service:  
+  nginx:
+    host: test.tws.tonal.com

@@ -1,0 +1,16 @@
+apiVersion: v2
+name: test-service
+version: 1.0.1
+appVersion: 1.0.1
+type: application
+home: https://github.com/omid-tonal/api-go/test_service
+sources: 
+ - https://github.com/omid-tonal/test-go/test_service
+dependencies:
+  - name: go-app
+    repository: "https://tonal-charts.tws.tonal.com"
+    version: 1.0.0
+    alias: test-service
+maintainers:
+- name: omid nejati
+  email: omid@tonal.com

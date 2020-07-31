@@ -1,0 +1,5 @@
+test-service:
+  targetPort: 8080
+  nginx:
+    enabled: true
+    path: "/"
