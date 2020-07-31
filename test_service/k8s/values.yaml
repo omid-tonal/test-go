@@ -2,7 +2,7 @@ test-service:
   replicas: 2
   image:
     name: test-service
-    tag: t2020-07-31-3c483b7
+    tag: t2020-07-31-1acdef1
   envFrom:
     envConfigEnabled: false
   service:
