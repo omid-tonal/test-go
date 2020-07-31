@@ -20,16 +20,14 @@ jobs:
     - uses: actions/checkout@v2
       with:
           token: ${{ secrets.CI_TOKEN }}
-          fetch-depth: 0                 
-    - name: Change the service tag on master
-      run: |
+          fetch-depth: 2
+    - run: |
+        git checkout HEAD^
         sed -i 's/tag.*/tag: ${{ github.event.client_payload.tag }}/g' ${{ github.event.client_payload.service }}/k8s/values.yaml
         git status
         git add ${{ github.event.client_payload.service }}/k8s/.
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -m "Auto update ${{ github.event.client_payload.service }} tag:${{ github.event.client_payload.tag }}"
-    - name: Push changes to master
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.CI_TOKEN }} 
+        git push
+
