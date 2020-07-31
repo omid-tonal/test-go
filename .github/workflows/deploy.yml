@@ -6,15 +6,16 @@ jobs:
   tag:
     runs-on: ubuntu-latest
     steps:
-    - name: Turnstyle
-      uses: softprops/turnstyle@v1
-      with:  
-        continue-after-seconds: 180         
-      env:
-        GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}    
     - uses: actions/checkout@v2
       with:
           token: ${{ secrets.CI_TOKEN }}
+    - name: Turnstyle
+      uses: softprops/turnstyle@v1
+      with:  
+        continue-after-seconds: 180
+        same-branch-only: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}          
     - name: Change the deployment tag on master
       if: github.ref == 'refs/heads/master'
       run: |
