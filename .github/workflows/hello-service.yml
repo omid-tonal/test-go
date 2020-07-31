@@ -4,12 +4,17 @@ on:
       - 'hello_service/**'
       - '!hello_service/k8s-hello-service/**'
       - '!hello_service/k8s-hello-service-external/**'
+      - 'scripts/**'
           
 name: hello-service 
 jobs:
   ci:
     runs-on: ubuntu-latest    
-    steps: 
+    steps:
+    - name: Turnstyle
+      uses: softprops/turnstyle@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Checkout
       uses: actions/checkout@v2
       with:
@@ -33,8 +38,6 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: us-west-2
     - name: Build image
-      # we don't create a image for prod branch, we just promote the image.   
-      if: ${{ steps.git.outputs.prefix }} != "prod"
       id: build
       env:
         SERVICE_NAME: hello-service 
@@ -71,16 +74,16 @@ jobs:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       uses: pullreminders/slack-action@master
       with:
-        args: '{\"channel\":\"C015DEMCDK8\",\"text\":\"Application hello-service has been successfully built.\",\"attachments\":[{\"fields\":[{\"title\":\"Repo\",\"value\":\"${{ steps.git.outputs.repo }}\",\"short\":true},{\"title\":\"Branch\",\"value\":\"${{ steps.git.outputs.branch }}\",\"short\":true},{\"title\":\"Commit\",\"value\":\"${{ steps.git.outputs.commit }}\",\"short\":true},{\"title\":\"Image Tag\",\"value\":\"${{steps.build.outputs.tag}}\",\"short\":true},{\"title\":\"Deploy on K8S\",\"value\":\"${{steps.build.outputs.deploy}}\",\"short\":false}]}]}'        
+        args: '{\"channel\":\"C015DEMCDK8\",\"text\":\"Application *hello-service* has been successfully built.\",\"attachments\":[{\"fields\":[{\"title\":\"Repo\",\"value\":\"${{ steps.git.outputs.repo }}\",\"short\":true},{\"title\":\"Branch\",\"value\":\"${{ steps.git.outputs.branch }}\",\"short\":true},{\"title\":\"Commit\",\"value\":\"${{ steps.git.outputs.commit }}\",\"short\":true},{\"title\":\"Image Tag\",\"value\":\"${{steps.build.outputs.tag}}\",\"short\":true},{\"title\":\"Deploy on Dev\",\"value\":\"```${{steps.build.outputs.deploy}}```\",\"short\":false}]}]}'        
     - name: Change the deployment tag on master
       if: github.ref == 'refs/heads/master'
       run: |
         git fetch origin master:tmp
         git rebase tmp
         #change the deployment tag on master
-        sed -i 's/tag.*/tag: ${{steps.build.outputs.tag}}/g' hello_service/k8s-hello-service/values.yaml
+        sed -i 's/tag.*/tag: ${{steps.build.outputs.tag}}/g' hello_service/k8s/values.yaml
         git status
-        git add hello_service/k8s-hello-service/.
+        git add hello_service/k8s/.
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -m "Auto update hello-service tag:${{steps.build.outputs.tag}}"
