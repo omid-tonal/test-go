@@ -10,6 +10,6 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
-func HelloServer(w http.ResponseWriter, r *http.Request) {
+func TestServer(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Test Tonal v1.0.0 %s!", r.URL.Path[1:])
 }
