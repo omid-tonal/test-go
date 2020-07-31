@@ -2,8 +2,8 @@ on:
   push:
     paths:
       - 'hello_service/**'
-      - '!hello_service/k8s-hello-service/**'
-      - '!hello_service/k8s-hello-service-external/**'
+      - '!hello_service/k8s/**'
+      - '!hello_service/k8s-external/**'
       - 'scripts/**'
           
 name: hello-service 
