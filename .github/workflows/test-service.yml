@@ -11,14 +11,14 @@ jobs:
   ci:
     runs-on: ubuntu-latest    
     steps:
-    - name: Turnstyle
-      uses: softprops/turnstyle@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Checkout
       uses: actions/checkout@v2
       with:
           token: ${{ secrets.CI_TOKEN }}
+    - name: Turnstyle
+      uses: softprops/turnstyle@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
     - name: Git info
       id: git
       run: |
@@ -69,26 +69,38 @@ jobs:
         # push docker image to ECR
         docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.tag}}
         docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.latest}}
-    - name: Notify slack
-      env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      uses: pullreminders/slack-action@master
+    # - name: Notify slack
+    #   env:
+    #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+    #   uses: pullreminders/slack-action@master
+    #   with:
+    #     args: '{\"channel\":\"C015DEMCDK8\",\"text\":\"Application *test-service* has been successfully built.\",\"attachments\":[{\"fields\":[{\"title\":\"Repo\",\"value\":\"${{ steps.git.outputs.repo }}\",\"short\":true},{\"title\":\"Branch\",\"value\":\"${{ steps.git.outputs.branch }}\",\"short\":true},{\"title\":\"Commit\",\"value\":\"${{ steps.git.outputs.commit }}\",\"short\":true},{\"title\":\"Image Tag\",\"value\":\"${{steps.build.outputs.tag}}\",\"short\":true},{\"title\":\"Deploy on Dev\",\"value\":\"```${{steps.build.outputs.deploy}}```\",\"short\":false}]}]}'        
+    - name: Repository Dispatch
+      uses: peter-evans/repository-dispatch@v1
       with:
-        args: '{\"channel\":\"C015DEMCDK8\",\"text\":\"Application *test-service* has been successfully built.\",\"attachments\":[{\"fields\":[{\"title\":\"Repo\",\"value\":\"${{ steps.git.outputs.repo }}\",\"short\":true},{\"title\":\"Branch\",\"value\":\"${{ steps.git.outputs.branch }}\",\"short\":true},{\"title\":\"Commit\",\"value\":\"${{ steps.git.outputs.commit }}\",\"short\":true},{\"title\":\"Image Tag\",\"value\":\"${{steps.build.outputs.tag}}\",\"short\":true},{\"title\":\"Deploy on Dev\",\"value\":\"```${{steps.build.outputs.deploy}}```\",\"short\":false}]}]}'        
+        token: ${{ secrets.CI_TOKEN }}
+        event-type: tag-push
+        client-payload: '{"tag": "${{steps.build.outputs.tag}}"}'
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+          token: ${{ secrets.CI_TOKEN }}
     - name: Change the deployment tag on master
       if: github.ref == 'refs/heads/master'
       run: |
         git fetch origin master:tmp
         git rebase tmp
         #change the deployment tag on master
-        sed -i 's/tag.*/tag: ${{steps.build.outputs.tag}}/g' test_service/k8s/values.yaml
+        sed -i 's/tag.*/tag: ${{github.event.client_payload.tag}}/g' test_service/k8s/values.yaml
         git status
         git add test_service/k8s/.
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git commit -m "Auto update test-service tag:${{steps.build.outputs.tag}}"
+        git commit -m "Auto update test-service tag:${{github.event.client_payload.tag}}"
     - name: Push changes to master
       if: github.ref == 'refs/heads/master'
       uses: ad-m/github-push-action@master
       with:
-        github_token: ${{ secrets.CI_TOKEN }}
+        github_token: ${{ secrets.CI_TOKEN }} 
