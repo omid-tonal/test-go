@@ -1,0 +1,15 @@
+apiVersion: v2
+name: test-service
+version: 1.0.1
+appVersion: 1.0.1
+home: https://github.com/tonalfitness/api-go/test_service
+sources: 
+ - https://github.com/tonalfitness/api-go/test_service
+dependencies:
+  - name: app-ingress
+    repository: "https://tonal-charts.tws.tonal.com"
+    version: 1.0.0
+    alias: test-service
+maintainers:
+- name: omid nejati
+  email: omid@tonal.com

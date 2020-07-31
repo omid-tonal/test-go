@@ -1,0 +1,20 @@
+test-service:
+  replicas: 2
+  image:
+    name: test-service
+    tag: t2020-07-29-229386c
+  envFrom:
+    envConfigEnabled: false
+  service:
+    enabled: false
+  health:
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 8080
+      initialDelaySeconds: 5
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 8080
+      initialDelaySeconds: 5
