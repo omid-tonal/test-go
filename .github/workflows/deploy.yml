@@ -22,7 +22,7 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
     - run: |
-        git pull origin master
+        git pull origin master --rebase
         sed -i 's/tag.*/tag: ${{ github.event.client_payload.tag }}/g' ${{ github.event.client_payload.service }}/k8s/values.yaml
         git status
         git add ${{ github.event.client_payload.service }}/k8s/.

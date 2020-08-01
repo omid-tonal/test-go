@@ -19,8 +19,7 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
     - name: Turnstyle
       uses: softprops/turnstyle@v1
-      with:  
-        continue-after-seconds: 180
+      with:
         same-branch-only: false          
       env:
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}          
@@ -63,8 +62,7 @@ jobs:
         fi
         # Build a docker image
         docker build --no-cache --build-arg GITHUB_TOKEN  --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR/$SERVICE_NAME:$LATEST_TAG \
-                                              -t $ECR/$SERVICE_NAME:$TAG test_service/.
-        echo "::set-output name=service::test_service"        
+                                              -t $ECR/$SERVICE_NAME:$TAG test_service/.      
         echo "::set-output name=tag::$TAG"
         echo "::set-output name=latest::$LATEST_TAG"
         echo "::set-output name=image::$ECR/$SERVICE_NAME"
@@ -87,4 +85,4 @@ jobs:
       with:
         token: ${{ secrets.CI_TOKEN }}
         event-type: deploy
-        client-payload: '{"service": "${{steps.build.outputs.service}}", "tag": "${{steps.build.outputs.tag}}"}'  
+        client-payload: '{"service": "test_service", "tag": "${{steps.build.outputs.tag}}"}'  
