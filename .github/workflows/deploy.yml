@@ -23,11 +23,11 @@ jobs:
           fetch-depth: 0
     - run: |
         git pull origin master --rebase
-        sed -i 's/tag.*/tag: ${{ github.event.deploy_payload.tag }}/g' ${{ github.event.deploy_payload.service }}/k8s/values.yaml
+        sed -i 's/tag.*/tag: ${{ github.event.client-payload.tag }}/g' ${{ github.event.client-payload.service }}/k8s/values.yaml
         git status
-        git add ${{ github.event.deploy_payload.service }}/k8s/.
+        git add ${{ github.event.client-payload.service }}/k8s/.
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git commit -m "Auto update ${{ github.event.deploy_payload.service }} tag:${{ github.event.deploy_payload.tag }}"
+        git commit -m "Auto update ${{ github.event.client-payload.service }} tag:${{ github.event.client-payload.tag }}"
         git push
 

@@ -16,11 +16,11 @@ jobs:
     - name: Build image
       id: build
       env:
-        SERVICE_NAME: ${{ github.event.build_payload.service }} 
-        REPO: ${{ github.event.build_payload.repo }}
-        BRANCH: ${{ github.event.build_payload.branch }}
-        BRANCH_PREFIX: ${{ github.event.build_payload.prefix }}
-        COMMIT: ${{ github.event.build_payload.commit }}
+        SERVICE_NAME: ${{ github.event.client-payload.service }} 
+        REPO: ${{ github.event.client-payload.repo }}
+        BRANCH: ${{ github.event.client-payload.branch }}
+        BRANCH_PREFIX: ${{ github.event.client-payload.prefix }}
+        COMMIT: ${{ github.event.client-payload.commit }}
         ECR: ${{ steps.login-ecr.outputs.registry }}
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
       run: |
@@ -50,11 +50,11 @@ jobs:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       uses: pullreminders/slack-action@master
       with:
-        args: '{\"channel\":\"C015DEMCDK8\",\"text\":\"Application *${{ github.event.build_payload.service }}* has been successfully built.\",\"attachments\":[{\"fields\":[{\"title\":\"Repo\",\"value\":\" ${{ github.event.build_payload.repo }}\",\"short\":true},{\"title\":\"Branch\",\"value\":\" ${{ github.event.build_payload.branch }}\",\"short\":true},{\"title\":\"Commit\",\"value\":\" ${{ github.event.build_payload.commit }}\",\"short\":true},{\"title\":\"Image Tag\",\"value\":\"${{steps.build.outputs.tag}}\",\"short\":true},{\"title\":\"Deploy on Dev\",\"value\":\"```${{steps.build.outputs.deploy}}```\",\"short\":false}]}]}'        
+        args: '{\"channel\":\"C015DEMCDK8\",\"text\":\"Application *${{ github.event.client-payload.service }}* has been successfully built.\",\"attachments\":[{\"fields\":[{\"title\":\"Repo\",\"value\":\" ${{ github.event.client-payload.repo }}\",\"short\":true},{\"title\":\"Branch\",\"value\":\" ${{ github.event.client-payload.branch }}\",\"short\":true},{\"title\":\"Commit\",\"value\":\" ${{ github.event.client-payload.commit }}\",\"short\":true},{\"title\":\"Image Tag\",\"value\":\"${{steps.build.outputs.tag}}\",\"short\":true},{\"title\":\"Deploy on Dev\",\"value\":\"```${{steps.build.outputs.deploy}}```\",\"short\":false}]}]}'        
     - name: Repository Dispatch
       if: github.ref == 'refs/heads/master'
       uses: peter-evans/repository-dispatch@v1
       with:
         token: ${{ secrets.CI_TOKEN }}
         event-type: deploy
-        deploy-payload: '{"service": "${{ github.event.build_payload.path }}", "tag": "${{steps.build.outputs.tag}}"}'  
+        client-payload: '{"service": "${{ github.event.client-payload.path }}", "tag": "${{steps.build.outputs.tag}}"}'  
