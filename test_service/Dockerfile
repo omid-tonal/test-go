@@ -15,7 +15,7 @@ ARG TEST
 # download from git
 RUN apk --no-cache add git gcc musl-dev \
     && git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/" \
-    && git clone --depth 1 --single-branch -b ${BRANCH}  https://github.com/omid-tonal/${REPO}.git
+    && git clone --depth 0 --single-branch -b ${BRANCH}  https://github.com/omid-tonal/${REPO}.git
 WORKDIR ${REPO}/test_service
 RUN git checkout ${COMMIT}
 # build 
