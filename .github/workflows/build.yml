@@ -27,10 +27,10 @@ jobs:
       run: |
        # Create a tag for docker image 
         if [[ $BRANCH_PREFIX != "master" ]]; then
-          TAG=${BRANCH_PREFIX}-t$(date "+%F")-$COMMIT
+          TAG=${BRANCH_PREFIX}-$COMMIT
           LATEST_TAG=${BRANCH_PREFIX}-latest
         else
-          TAG=t$(date "+%F")-$COMMIT
+          TAG=$COMMIT
           LATEST_TAG=latest  
         fi        
         # Build a docker image
