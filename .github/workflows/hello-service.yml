@@ -48,4 +48,4 @@ jobs:
       with:
         token: ${{ secrets.CI_TOKEN }}
         event-type: build
-        build-payload: '{"service": "${{ steps.git.outputs.service }}", "repo": "${{ steps.git.outputs.repo }}", "path": "${{ steps.git.outputs.path }}", "branch": "${{ steps.git.outputs.branch }}", "prefix": "${{ steps.git.outputs.prefix }}", "commit": "${{ steps.git.outputs.commit }}"}'
+        client-payload: '{"service": "${{ steps.git.outputs.service }}", "repo": "${{ steps.git.outputs.repo }}", "path": "${{ steps.git.outputs.path }}", "branch": "${{ steps.git.outputs.branch }}", "prefix": "${{ steps.git.outputs.prefix }}", "commit": "${{ steps.git.outputs.commit }}"}'
