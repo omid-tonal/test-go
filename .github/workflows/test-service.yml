@@ -5,7 +5,7 @@ on:
       - '!test_service/k8s/**'
       - '!test_service/k8s-external/**'
       - 'scripts/**'
-          
+        
 name: test-service 
 jobs:
   ci:
@@ -49,6 +49,7 @@ jobs:
         COMMIT: ${{ steps.git.outputs.commit }}
         ECR: ${{ steps.login-ecr.outputs.registry }}
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
+        PATH: test_service
       run: |
        # Create a tag for docker image 
         if [[ $BRANCH_PREFIX != "master" ]]; then
@@ -60,7 +61,7 @@ jobs:
         fi
         # Build a docker image
         docker build --no-cache --build-arg GITHUB_TOKEN  --build-arg REPO --build-arg BRANCH --build-arg COMMIT -t $ECR/$SERVICE_NAME:$LATEST_TAG \
-                                              -t $ECR/$SERVICE_NAME:$TAG test_service/.      
+                                              -t $ECR/$SERVICE_NAME:$TAG $PATH/.      
         echo "::set-output name=tag::$TAG"
         echo "::set-output name=latest::$LATEST_TAG"
         echo "::set-output name=image::$ECR/$SERVICE_NAME"
