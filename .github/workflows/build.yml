@@ -1,0 +1,60 @@
+on:
+  repository_dispatch:
+    types: [build]
+name: build
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:                   
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: us-west-2
+    - name: Build image
+      id: build
+      env:
+        SERVICE_NAME: ${{ github.event.build_payload.service }} 
+        REPO: ${{ github.event.build_payload.repo }}
+        BRANCH: ${{ github.event.build_payload.branch }}
+        BRANCH_PREFIX: ${{ github.event.build_payload.prefix }}
+        COMMIT: ${{ github.event.build_payload.commit }}
+        ECR: ${{ steps.login-ecr.outputs.registry }}
+        GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
+      run: |
+       # Create a tag for docker image 
+        if [[ $BRANCH_PREFIX != "master" ]]; then
+          TAG=${BRANCH_PREFIX}-t$(date "+%F")-${COMMIT}
+          LATEST_TAG=${BRANCH_PREFIX}-latest
+        else
+          TAG=t$(date "+%F")-${COMMIT}
+          LATEST_TAG=latest  
+        fi
+        # Build a docker image
+        docker build --no-cache --build-arg GITHUB_TOKEN  --build-arg REPO=${REPO} --build-arg BRANCH=${BRANCH} --build-arg COMMIT=${COMMIT} -t $ECR/$SERVICE_NAME:$LATEST_TAG \
+                                              -t $ECR/$SERVICE_NAME:$TAG hello_service/.
+        echo "::set-output name=tag::$TAG"
+        echo "::set-output name=latest::$LATEST_TAG"
+        echo "::set-output name=image::$ECR/$SERVICE_NAME"
+        echo "::set-output name=deploy::kubectl set image deployment/dev-$SERVICE_NAME-$SERVICE_NAME $SERVICE_NAME=$ECR/$SERVICE_NAME:$TAG --namespace=dev" 
+    - name: Push Image
+      id: push
+      run: |
+        # push docker image to ECR
+        docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.tag}}
+        docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.latest}}
+    - name: Notify Slack
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      uses: pullreminders/slack-action@master
+      with:
+        args: '{\"channel\":\"C015DEMCDK8\",\"text\":\"Application *${{ github.event.build_payload.service }}* has been successfully built.\",\"attachments\":[{\"fields\":[{\"title\":\"Repo\",\"value\":\" ${{ github.event.build_payload.repo }}\",\"short\":true},{\"title\":\"Branch\",\"value\":\" ${{ github.event.build_payload.branch }}\",\"short\":true},{\"title\":\"Commit\",\"value\":\" ${{ github.event.build_payload.commit }}\",\"short\":true},{\"title\":\"Image Tag\",\"value\":\"${{steps.build.outputs.tag}}\",\"short\":true},{\"title\":\"Deploy on Dev\",\"value\":\"```${{steps.build.outputs.deploy}}```\",\"short\":false}]}]}'        
+    - name: Repository Dispatch
+      if: github.ref == 'refs/heads/master'
+      uses: peter-evans/repository-dispatch@v1
+      with:
+        token: ${{ secrets.CI_TOKEN }}
+        event-type: deploy
+        deploy-payload: '{"service": "${{ github.event.build_payload.path }}", "tag": "${{steps.build.outputs.tag}}"}'  
