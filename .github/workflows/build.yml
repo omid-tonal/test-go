@@ -66,14 +66,14 @@ jobs:
         # push docker image to ECR
         docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.tag}}
         docker push ${{ steps.build.outputs.image }}:${{steps.build.outputs.latest}}
-    - name: Notify Slack
-      env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      uses: pullreminders/slack-action@master
-      with:
-        args: '{\"channel\":\"C015DEMCDK8\",\"text\":\"Application *${{ github.event.client_payload.service }}* has been successfully built.\",\"attachments\":[{\"fields\":[{\"title\":\"Repo\",\"value\":\" ${{ github.event.client_payload.repo }}\",\"short\":true},{\"title\":\"Branch\",\"value\":\" ${{ github.event.client_payload.branch }}\",\"short\":true},{\"title\":\"Commit\",\"value\":\" ${{ github.event.client_payload.commit }}\",\"short\":true},{\"title\":\"Image Tag\",\"value\":\"${{steps.build.outputs.tag}}\",\"short\":true},{\"title\":\"Deploy on Dev\",\"value\":\"```${{steps.build.outputs.deploy}}```\",\"short\":false}]}]}'        
+    # - name: Notify Slack
+    #   env:
+    #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+    #   uses: pullreminders/slack-action@master
+    #   with:
+    #     args: '{\"channel\":\"C015DEMCDK8\",\"text\":\"Application *${{ github.event.client_payload.service }}* has been successfully built.\",\"attachments\":[{\"fields\":[{\"title\":\"Repo\",\"value\":\" ${{ github.event.client_payload.repo }}\",\"short\":true},{\"title\":\"Branch\",\"value\":\" ${{ github.event.client_payload.branch }}\",\"short\":true},{\"title\":\"Commit\",\"value\":\" ${{ github.event.client_payload.commit }}\",\"short\":true},{\"title\":\"Image Tag\",\"value\":\"${{steps.build.outputs.tag}}\",\"short\":true},{\"title\":\"Deploy on Dev\",\"value\":\"```${{steps.build.outputs.deploy}}```\",\"short\":false}]}]}'        
     - name: Repository Dispatch
-      if: github.ref == 'refs/heads/master'
+      if: ${{ github.event.client_payload.branch }} == ${{ github.event.client_payload.prefix }}
       uses: peter-evans/repository-dispatch@v1
       with:
         token: ${{ secrets.CI_TOKEN }}

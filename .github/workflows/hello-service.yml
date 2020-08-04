@@ -42,7 +42,7 @@ jobs:
         echo "::set-output name=repo::$REPO"
         echo "::set-output name=path::$SERVICE_PATH"
         echo "::set-output name=branch::$BRANCH"
-        echo "::set-output name=prefix::$BRANCH"
+        echo "::set-output name=prefix::$BRANCH_PREFIX"
         echo "::set-output name=commit::$COMMIT"
     - name: Repository Dispatch
       uses: peter-evans/repository-dispatch@v1
