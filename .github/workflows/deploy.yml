@@ -1,7 +1,7 @@
+name: deploy
 on:
   repository_dispatch:
     types: [deploy]
-name: deploy
 jobs:
   check:
     runs-on: ubuntu-latest
