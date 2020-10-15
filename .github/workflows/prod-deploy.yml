@@ -12,7 +12,7 @@ jobs:
     - name: Connect to K8S
       uses: actions-hub/kubectl@master
       env:
-        KUBECONFIG: ${{ secrets.KUBECONFIG }}    
+        KUBE_CONFIG: ${{ secrets.KUBECONFIG }}    
     - name: Create Branch
       uses: actions/checkout@v2
       with:
