@@ -1,0 +1,55 @@
+name: prod-deploy
+on: 
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service Name'     
+        required: true
+jobs:
+        
+  prod:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/kubectl-alpine@v2
+      env:
+        KUBECONFIG: ${{ secrets.KUBECONFIG }}    
+    - name: Create Branch
+      uses: actions/checkout@v2
+      with:
+          token: ${{ secrets.CI_TOKEN }}      
+    - run: |
+        SHA=$(kubectl describe -n tools applications.argoproj.io qa-${{ github.event.inputs.service }} | grep service:t | cut -f7 -d "-")
+        TAG=$(kubectl describe -n tools applications.argoproj.io qa-live | grep service:t | cut -f2 -d ":")
+        BRANCH=qa-${{ github.event.inputs.service }}-$SHA
+        DIR=$(echo "${${{ github.event.inputs.service }}//-/_}")
+        
+        git checkout -b $BRANCH $SHA
+        sed -i 's/tag.*/tag: $TAG/g' $DIR_service/k8s/values.yaml
+        git status
+        git add $DIR_service/k8s/.
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git commit -m "promote ${{ github.event.inputs.service }}-service image to prod"
+        git push --set-upstream origin $BRANCH
+
+        echo "::set-output name=branch::$BRANCH"
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v3
+      with:
+        token: ${{ secrets.CI_TOKEN }}
+        commit-message: ${{ github.event.inputs.service }} to prod 
+        committer: GitHub <noreply@github.com>
+        author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+        signoff: false
+        branch: prod/$DIR_service
+        delete-branch: true
+        title: '${{ github.event.inputs.service }} to prod'
+        labels: |
+          api
+          automated pr
+        team-reviewers: |
+          owners
+          maintainers
+        milestone: 1
+        draft: false
+
