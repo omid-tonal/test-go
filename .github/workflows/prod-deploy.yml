@@ -8,18 +8,21 @@ on:
 jobs:   
   PR:
     runs-on: ubuntu-latest
-    steps:
+    steps:    
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+          token: ${{ secrets.CI_TOKEN }}
     - name: Connect to K8S
       uses: actions-hub/kubectl@master
       env:
-        KUBE_CONFIG: ${{ secrets.KUBECONFIG }}    
-    - name: Create Branch
-      uses: actions/checkout@v2
+        KUBE_CONFIG: ${{ secrets.KUBECONFIG }}
       with:
-          token: ${{ secrets.CI_TOKEN }}      
-    - run: |
+        args: describe -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}                   
+    - name: Create Branch
+      run: |
         SHA=$(kubectl describe -n tools applications.argoproj.io qa-${{ github.event.inputs.service }} | grep service:t | cut -f7 -d "-")
-        TAG=$(kubectl describe -n tools applications.argoproj.io qa-live | grep service:t | cut -f2 -d ":")
+        TAG=$(kubectl describe -n tools applications.argoproj.io qa-${{ github.event.inputs.service }} | grep service:t | cut -f2 -d ":")
         BRANCH=qa-${{ github.event.inputs.service }}-$SHA
         DIR=$(echo "${${{ github.event.inputs.service }}//-/_}")
         
