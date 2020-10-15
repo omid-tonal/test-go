@@ -1,16 +1,16 @@
-name: prod-deploy
+name: DeployToProd
 on: 
   workflow_dispatch:
     inputs:
       service:
         description: 'Service Name'     
         required: true
-jobs:
-        
-  prod:
+jobs:   
+  PR:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/kubectl-alpine@v2
+    - name: Connect to K8S
+      uses: actions-hub/kubectl@master
       env:
         KUBECONFIG: ${{ secrets.KUBECONFIG }}    
     - name: Create Branch
@@ -34,6 +34,7 @@ jobs:
 
         echo "::set-output name=branch::$BRANCH"
     - name: Create Pull Request
+      id: cpr
       uses: peter-evans/create-pull-request@v3
       with:
         token: ${{ secrets.CI_TOKEN }}
@@ -52,4 +53,7 @@ jobs:
           maintainers
         milestone: 1
         draft: false
-
+    - name: Check outputs
+      run: |
+        echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+        echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
