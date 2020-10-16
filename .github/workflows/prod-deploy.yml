@@ -21,26 +21,30 @@ jobs:
         KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
       with:
         args: get -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"
-    - name: Create Branch
-      id: branch
+    - name: Create Variables
+      id: var
       run: |
         SHA=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d "-" -f7)
         TAG=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d ":" -f2)
         BRANCH=qa/${{ github.event.inputs.service }}-$SHA
         SDIR=$(echo "${{ github.event.inputs.service }}" | tr - _)_service
-        echo $TAG
+        echo "::set-output name=sha::$SHA"
+        echo "::set-output name=tag::$TAG"
+        echo "::set-output name=branch::$BRANCH"
+        echo "::set-output name=dir::$SDIR"
+    - name: Create Branch
+      id: branch
+      run: |
         git pull origin master --rebase
-        git checkout -b $BRANCH $SHA
-        sed -i 's/tag.*/tag: $TAG/g' $SDIR/k8s/values.yaml
+        git checkout -b ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
+        sed -i 's/tag.*/tag: ${{ steps.var.outputs.tag }}/g' ${{ steps.var.outputs.dir }}/k8s/values.yaml
         git status
-        git add $SDIR/k8s/.
+        git add ${{ steps.var.outputs.dir }}/k8s/.
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -m "promote ${{ github.event.inputs.service }}-service image to prod"
         git push --set-upstream origin $BRANCH
-        git checkout prod/$SDIR
-        
-        echo "::set-output name=branch::$BRANCH"
+        git checkout prod/${{ steps.var.outputs.dir }}       
     - name: Create Pull Request
       id: cpr
       uses: peter-evans/create-pull-request@v3
@@ -50,7 +54,7 @@ jobs:
         committer: GitHub <noreply@github.com>
         author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
         signoff: false
-        branch: ${{ steps.branch.outputs.branch }}
+        branch: ${{ steps.var.outputs.branch }}
         delete-branch: true
         title: '${{ github.event.inputs.service }} to prod'
         labels: |
