@@ -22,9 +22,9 @@ jobs:
         args: get -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"
     - name: Create Branch
       run: |
-        SHA=$(${{ steps.image.outputs.result }} | cut -f7 -d "-")
-        TAG=$(${{ steps.image.outputs.result }} | cut -f2 -d ":")
-        BRANCH=qa-${{ github.event.inputs.service }}-$SHA
+        SHA=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d "-" -f7)
+        TAG=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d ":" -f2)
+        BRANCH=qa/${{ github.event.inputs.service }}-$SHA
         DIR=$(echo "${${{ github.event.inputs.service }}//-/_}")
         
         git checkout -b $BRANCH $SHA
