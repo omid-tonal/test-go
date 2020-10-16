@@ -26,7 +26,7 @@ jobs:
         SHA=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d "-" -f7)
         TAG=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d ":" -f2)
         BRANCH=qa/${{ github.event.inputs.service }}-$SHA
-        DIR=$(echo "${${{ github.event.inputs.service }}//-/_}")
+        DIR=$(echo ${{ github.event.inputs.service }} | tr - _)
         
         git pull origin master --rebase
         git checkout -b $BRANCH $SHA
