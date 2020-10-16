@@ -17,9 +17,8 @@ jobs:
       uses: actions-hub/kubectl@master
       env:
         KUBE_CONFIG: ${{ secrets.KUBECONFIG }}
-      with:
-        args: |
-          SHA=$(describe -n tools applications.argoproj.io qa-${{ github.event.inputs.service }} | grep service:t | cut -f7 -d "-")
+      run: |
+          SHA=$(kubectl describe -n tools applications.argoproj.io qa-${{ github.event.inputs.service }} | grep service:t | cut -f7 -d "-")
           TAG=$(describe -n tools applications.argoproj.io qa-${{ github.event.inputs.service }} | grep service:t | cut -f2 -d ":")
 
           echo "::set-output name=sha::$SHA"
