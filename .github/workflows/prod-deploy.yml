@@ -19,7 +19,7 @@ jobs:
       env:
         KUBE_CONFIG: ${{ secrets.KUBECONFIG }}
       with:
-        args: describe -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service | grep service:t
+        args: get -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"
     - name: Create Branch
       run: |
         SHA=$(${{ steps.image.outputs.result }} | cut -f7 -d "-")
