@@ -16,15 +16,14 @@ jobs:
         KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
       with:
         args: get -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"
-    - name: prod Deployment Image
-      id: prod-image
-      uses: Consensys/kubernetes-action@master
-      env:
-        KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
-      with:
-        args: get -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"        
+    # - name: prod Deployment Image
+    #   id: prod-image
+    #   uses: Consensys/kubernetes-action@master
+    #   env:
+    #     KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
+    #   with:
+    #     args: get -n tools applications.argoproj.io prod-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"        
     - name: Create Variables
-      if: ${{ steps.qa-image.outputs.result }} != ${{ steps.prod-image.outputs.result }}
       id: var
       run: |
         SHA=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d "-" -f7)
