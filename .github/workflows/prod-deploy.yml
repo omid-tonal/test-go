@@ -24,7 +24,6 @@ jobs:
       with:
         args: get -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"        
     - name: Create Variables
-      if: ${{ steps.qa-image.outputs.result }} != ${{ steps.prod-image.outputs.result }}
       id: var
       run: |
         SHA=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d "-" -f7)
