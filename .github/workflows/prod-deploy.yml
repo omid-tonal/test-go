@@ -9,6 +9,11 @@ jobs:
   PR:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+          token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0    
     - name: QA Deployment Image
       id: qa-image
       uses: Consensys/kubernetes-action@master
@@ -16,14 +21,15 @@ jobs:
         KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
       with:
         args: get -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"
-    # - name: prod Deployment Image
-    #   id: prod-image
-    #   uses: Consensys/kubernetes-action@master
-    #   env:
-    #     KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
-    #   with:
-    #     args: get -n tools applications.argoproj.io prod-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"        
+    - name: prod Deployment Image
+      id: prod-image
+      uses: Consensys/kubernetes-action@master
+      env:
+        KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
+      with:
+        args: get -n tools applications.argoproj.io prod-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"        
     - name: Create Variables
+      if: steps.qa-image.outputs.result != steps.prod-image.outputs.result
       id: var
       run: |
         SHA=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d "-" -f7)
@@ -34,11 +40,8 @@ jobs:
         echo "::set-output name=tag::$TAG"
         echo "::set-output name=branch::$BRANCH"
         echo "::set-output name=dir::$SDIR"
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-          token: ${{ secrets.CI_TOKEN }}
-          fetch-depth: 0
+    - name: Create Branch
+      id: branch
       run: |
         git pull origin master --rebase
         git checkout -b ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
