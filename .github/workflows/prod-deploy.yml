@@ -13,27 +13,22 @@ jobs:
       uses: actions/checkout@v2
       with:
           token: ${{ secrets.CI_TOKEN }}
-    - name: Deployment SHA
-      id: sha
+    - name: Deployment Image
+      id: image
       uses: actions-hub/kubectl@master
       env:
         KUBE_CONFIG: ${{ secrets.KUBECONFIG }}
       with:
-        args: describe -n tools applications.argoproj.io qa-${{ github.event.inputs.service }} | grep service:t | cut -f7 -d "-"
-    - name: Deployment Tag
-      id: tag
-      uses: actions-hub/kubectl@master
-      env:
-        KUBE_CONFIG: ${{ secrets.KUBECONFIG }}
-      with:
-        args: describe -n tools applications.argoproj.io qa-${{ github.event.inputs.service }} | grep service:t | cut -f2 -d ":"
+        args: describe -n tools applications.argoproj.io qa-${{ github.event.inputs.service }} | grep service:t
     - name: Create Branch
       run: |
-        BRANCH=qa-${{ github.event.inputs.service }}-${{ steps.sha.outputs.result }}
+        SHA=$(${{ steps.image.outputs.result }} | cut -f7 -d "-")
+        TAG=$(${{ steps.image.outputs.result }} | cut -f2 -d ":")
+        BRANCH=qa-${{ github.event.inputs.service }}-$SHA
         DIR=$(echo "${${{ github.event.inputs.service }}//-/_}")
         
-        git checkout -b $BRANCH ${{ steps.sha.outputs.result }}
-        sed -i 's/tag.*/tag: ${{ steps.tag.outputs.result }}/g' $DIR_service/k8s/values.yaml
+        git checkout -b $BRANCH $SHA
+        sed -i 's/tag.*/tag: $TAG/g' $DIR_service/k8s/values.yaml
         git status
         git add $DIR_service/k8s/.
         git config --local user.email "action@github.com"
