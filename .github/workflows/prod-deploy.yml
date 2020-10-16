@@ -46,7 +46,7 @@ jobs:
         committer: GitHub <noreply@github.com>
         author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
         signoff: false
-        branch: prod/$DIR_service
+        branch: prod/$SDIR
         delete-branch: true
         title: '${{ github.event.inputs.service }} to prod'
         labels: |
