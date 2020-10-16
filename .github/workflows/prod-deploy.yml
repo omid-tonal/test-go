@@ -26,8 +26,8 @@ jobs:
         SHA=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d "-" -f7)
         TAG=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d ":" -f2)
         BRANCH=qa/${{ github.event.inputs.service }}-$SHA
-        SDIR=$(echo ${{ github.event.inputs.service }} | tr - _)
-        
+        SDIR=$(echo "${{ github.event.inputs.service }}" | tr - _)
+        echo $SDIR
         git pull origin master --rebase
         git checkout -b $BRANCH $SHA
         sed -i 's/tag.*/tag: $TAG/g' $SDIR_service/k8s/values.yaml
