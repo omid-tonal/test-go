@@ -2,7 +2,7 @@ hello-service:
   replicas: 2
   image:
     name: hello-service
-    tag: omid-t2020-08-04-3b8210c
+    tag: $TAG
   envFrom:
     envConfigEnabled: false
   service:
