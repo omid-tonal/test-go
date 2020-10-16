@@ -22,12 +22,13 @@ jobs:
       with:
         args: get -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"
     - name: Create Branch
+      id: branch
       run: |
         SHA=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d "-" -f7)
         TAG=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d ":" -f2)
         BRANCH=qa/${{ github.event.inputs.service }}-$SHA
         SDIR=$(echo "${{ github.event.inputs.service }}" | tr - _)_service
-        echo $SDIR
+        echo $TAG
         git pull origin master --rebase
         git checkout -b $BRANCH $SHA
         sed -i 's/tag.*/tag: $TAG/g' $SDIR/k8s/values.yaml
@@ -37,6 +38,9 @@ jobs:
         git config --local user.name "GitHub Action"
         git commit -m "promote ${{ github.event.inputs.service }}-service image to prod"
         git push --set-upstream origin $BRANCH
+        git checkout prod/$SDIR
+        
+        echo "::set-output name=branch::$BRANCH"
     - name: Create Pull Request
       id: cpr
       uses: peter-evans/create-pull-request@v3
@@ -46,7 +50,7 @@ jobs:
         committer: GitHub <noreply@github.com>
         author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
         signoff: false
-        branch: prod/$SDIR
+        branch: ${{ steps.branch.outputs.branch }}
         delete-branch: true
         title: '${{ github.event.inputs.service }} to prod'
         labels: |
