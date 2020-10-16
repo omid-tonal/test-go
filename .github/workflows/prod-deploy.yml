@@ -15,9 +15,9 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
     - name: Deployment Image
       id: image
-      uses: actions-hub/kubectl@master
+      uses: Consensys/kubernetes-action@master
       env:
-        KUBE_CONFIG: ${{ secrets.KUBECONFIG }}
+        KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
       with:
         args: get -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"
     - name: Create Branch
