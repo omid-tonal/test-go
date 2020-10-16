@@ -8,43 +8,49 @@ on:
 jobs:   
   PR:
     runs-on: ubuntu-latest
-    steps:    
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-          token: ${{ secrets.CI_TOKEN }}
-          fetch-depth: 0
-    - name: Deployment Image
-      id: image
+    steps:
+    - name: QA Deployment Image
+      id: qa-image
       uses: Consensys/kubernetes-action@master
       env:
         KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
       with:
         args: get -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"
+    - name: prod Deployment Image
+      id: prod-image
+      uses: Consensys/kubernetes-action@master
+      env:
+        KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
+      with:
+        args: get -n tools applications.argoproj.io qa-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"        
     - name: Create Variables
+      if: ${{ steps.qa-image.outputs.result }} != ${{ steps.prod-image.outputs.result }}
       id: var
       run: |
-        SHA=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d "-" -f7)
-        TAG=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d ":" -f2)
+        SHA=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d "-" -f7)
+        TAG=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d ":" -f2)
         BRANCH=qa/${{ github.event.inputs.service }}-$SHA
         SDIR=$(echo "${{ github.event.inputs.service }}" | tr - _)_service
         echo "::set-output name=sha::$SHA"
         echo "::set-output name=tag::$TAG"
         echo "::set-output name=branch::$BRANCH"
         echo "::set-output name=dir::$SDIR"
-    - name: Create Branch
-      id: branch
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+          token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
       run: |
         git pull origin master --rebase
         git checkout -b ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
         sed -i 's/tag.*/tag: ${{ steps.var.outputs.tag }}/g' ${{ steps.var.outputs.dir }}/k8s/values.yaml
+        git add ${{ steps.var.outputs.dir }}/k8s/values.yaml
         git status
-        git add ${{ steps.var.outputs.dir }}/k8s/.
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -m "promote ${{ github.event.inputs.service }}-service image to prod"
-        git push --set-upstream origin $BRANCH
-        git checkout prod/${{ steps.var.outputs.dir }}       
+        git push --set-upstream origin ${{ steps.var.outputs.branch }}
+        git checkout prod/${{ steps.var.outputs.dir }}   
     - name: Create Pull Request
       id: cpr
       uses: peter-evans/create-pull-request@v3
