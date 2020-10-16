@@ -1,4 +1,4 @@
-name: DeployToProd
+name: deploy-to-prod
 on: 
   workflow_dispatch:
     inputs:
@@ -26,13 +26,13 @@ jobs:
         SHA=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d "-" -f7)
         TAG=$(echo ${{ steps.image.outputs.result }} | tr -d ] | cut -d ":" -f2)
         BRANCH=qa/${{ github.event.inputs.service }}-$SHA
-        DIR=$(echo ${{ github.event.inputs.service }} | tr - _)
+        SDIR=$(echo ${{ github.event.inputs.service }} | tr - _)
         
         git pull origin master --rebase
         git checkout -b $BRANCH $SHA
-        sed -i 's/tag.*/tag: $TAG/g' $DIR_service/k8s/values.yaml
+        sed -i 's/tag.*/tag: $TAG/g' $SDIR_service/k8s/values.yaml
         git status
-        git add $DIR_service/k8s/.
+        git add $SDIR_service/k8s/.
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -m "promote ${{ github.event.inputs.service }}-service image to prod"
