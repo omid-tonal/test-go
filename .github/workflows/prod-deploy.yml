@@ -47,16 +47,18 @@ jobs:
         git push --set-upstream origin ${{ steps.var.outputs.branch }}
     - name: Change the Tag  
       run: |
+        git Checkout ${{ steps.var.outputs.branch }}
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
         sed -i "s/tag.*/tag: ${{ steps.var.outputs.tag }}/g" ${{ steps.var.outputs.dir }}/k8s/values.yaml
-        rm -rf kubeconfig
         git add -A
+        git commit -m "promote ${{ steps.var.outputs.tag }} to prod"
+        git push --set-upstream origin ${{ steps.var.outputs.branch }}
     - name: Create Pull Request
       id: cpr
       uses: peter-evans/create-pull-request@v3
       with:
         token: ${{ secrets.CI_TOKEN }}
-        commit-message: promote ${{ steps.var.outputs.tag }} to prod 
-        committer: GitHub <action@github.com>
         author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
         base: prod/${{ steps.var.outputs.dir }}
         branch: ${{ steps.var.outputs.branch }}
