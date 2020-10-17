@@ -58,9 +58,8 @@ jobs:
         commit-message: promote ${{ steps.var.outputs.tag }} to prod 
         committer: GitHub <action@github.com>
         author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-        signoff: false
-        branch: prod/${{ steps.var.outputs.dir }}
-        base: ${{ steps.var.outputs.branch }}
+        base: prod/${{ steps.var.outputs.dir }}
+        branch: ${{ steps.var.outputs.branch }}
         delete-branch: true
         title: '${{ github.event.inputs.service }} to prod'
         body: |
@@ -73,8 +72,6 @@ jobs:
           automated pr
         team-reviewers: |
           owners
-        milestone: 1
-        draft: false
     - name: Check outputs
       run: |
         echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
