@@ -45,11 +45,10 @@ jobs:
       run: |
         git branch ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
         git push --set-upstream origin ${{ steps.var.outputs.branch }}
-    - name: Change the Tag
-      working-directory: ${{ steps.var.outputs.dir }}     
+    - name: Change the Tag  
       run: |
-        sed -i 's/tag.*/tag: ${{ steps.var.outputs.tag }}/g' k8s/values.yaml
-
+        sed -i 's/tag.*/tag: ${{ steps.var.outputs.tag }}/g' ${{ steps.var.outputs.dir }}/k8s/values.yaml
+        rm -rf kubeconfig
     - name: Create Pull Request
       id: cpr
       uses: peter-evans/create-pull-request@v3
