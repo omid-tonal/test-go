@@ -81,4 +81,4 @@ jobs:
     #     git config --local user.email "action@github.com"
     #     git config --local user.name "GitHub Action"
     #     git commit -m "promote ${{ github.event.inputs.service }}-service image to prod"
-        git push --set-upstream origin ${{ steps.var.outputs.branch }}
+        # git push --set-upstream origin ${{ steps.var.outputs.branch }}
