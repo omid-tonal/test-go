@@ -6,7 +6,7 @@ on:
         description: 'Service Name'     
         required: true
 jobs:   
-  Branch:
+  PR:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -49,6 +49,7 @@ jobs:
       run: |
         sed -i 's/tag.*/tag: ${{ steps.var.outputs.tag }}/g' ${{ steps.var.outputs.dir }}/k8s/values.yaml
         rm -rf kubeconfig
+        git add -A
     - name: Create Pull Request
       id: cpr
       uses: peter-evans/create-pull-request@v3
