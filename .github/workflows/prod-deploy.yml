@@ -47,7 +47,7 @@ jobs:
         git push --set-upstream origin ${{ steps.var.outputs.branch }}
     - name: Change the Tag  
       run: |
-        git Checkout ${{ steps.var.outputs.branch }}
+        git checkout ${{ steps.var.outputs.branch }}
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         sed -i "s/tag.*/tag: ${{ steps.var.outputs.tag }}/g" ${{ steps.var.outputs.dir }}/k8s/values.yaml
