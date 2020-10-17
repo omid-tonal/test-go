@@ -32,6 +32,7 @@ jobs:
       if: ${{ steps.qa-image.outputs.result != steps.prod-image.outputs.result }}
       id: var
       run: |
+        rm -rf kubeconfig
         SHA=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d "-" -f7)
         TAG=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d ":" -f2)
         BRANCH=qa/${{ github.event.inputs.service }}-$SHA
@@ -54,6 +55,21 @@ jobs:
         git add -A
         git commit -m "promote ${{ steps.var.outputs.tag }} to prod"
         git push --set-upstream origin ${{ steps.var.outputs.branch }}
+    - name: Create Pull Request
+      uses: repo-sync/pull-request@v2
+      with:
+        source_branch: "${{ steps.var.outputs.branch }}"
+        destination_branch: "prod/${{ steps.var.outputs.dir }}"
+        pr_title: "${{ github.event.inputs.service }} to prod"
+        pr_body: ":crown: *An automated PR*"
+        pr_reviewer: "omid-tonal"
+        pr_assignee: "omid-tonal"
+        pr_label: "automated pr, api, deploy"
+        pr_draft: true
+        pr_allow_empty: true
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+
     # - name: Create Pull Request
     #   id: cpr
     #   uses: peter-evans/create-pull-request@v3
