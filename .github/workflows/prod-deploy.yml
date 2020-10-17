@@ -12,8 +12,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
       with:
-          token: ${{ secrets.CI_TOKEN }}
-          fetch-depth: 0    
+          token: ${{ secrets.CI_TOKEN }}    
     - name: QA Deployment Image
       id: qa-image
       uses: Consensys/kubernetes-action@master
@@ -43,7 +42,6 @@ jobs:
     - name: Create Branch
       id: branch
       run: |
-        git pull origin master --rebase
         git checkout -b ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
         git push --set-upstream origin ${{ steps.var.outputs.branch }}
         git checkout prod/${{ steps.var.outputs.dir }}
@@ -74,7 +72,8 @@ jobs:
         echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
     - name: Promote Prod
       working-directory: ${{ steps.var.outputs.dir }} 
-      run: |  
+      run: |
+        git pull origin master --rebase
         git checkout ${{ steps.var.outputs.branch }}
         sed -i 's/tag.*/tag: ${{ steps.var.outputs.tag }}/g' k8s/values.yaml
         git add k8s/values.yaml
