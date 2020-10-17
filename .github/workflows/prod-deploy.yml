@@ -43,43 +43,42 @@ jobs:
     - name: Create Branch
       id: branch
       run: |
-        git checkout -b ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
+        git branch ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
         git push --set-upstream origin ${{ steps.var.outputs.branch }}
-        git checkout prod/${{ steps.var.outputs.dir }}
 
-    - name: Create Pull Request
-      id: cpr
-      uses: peter-evans/create-pull-request@v3
-      with:
-        token: ${{ secrets.CI_TOKEN }}
-        commit-message: ${{ github.event.inputs.service }} to prod 
-        committer: GitHub <noreply@github.com>
-        author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-        signoff: false
-        branch: ${{ steps.var.outputs.branch }}
-        delete-branch: true
-        title: '${{ github.event.inputs.service }} to prod'
-        labels: |
-          api
-          automated pr
-        team-reviewers: |
-          owners
-          maintainers
-        milestone: 1
-        draft: false
-    - name: Check outputs
-      run: |
-        echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
-        echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
-    - name: Promote Prod
-      working-directory: ${{ steps.var.outputs.dir }} 
-      run: |
-        git pull origin master --rebase
-        git checkout ${{ steps.var.outputs.branch }}
-        sed -i 's/tag.*/tag: ${{ steps.var.outputs.tag }}/g' k8s/values.yaml
-        git add k8s/values.yaml
-        git status
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git commit -m "promote ${{ github.event.inputs.service }}-service image to prod"
+    # - name: Create Pull Request
+    #   id: cpr
+    #   uses: peter-evans/create-pull-request@v3
+    #   with:
+    #     token: ${{ secrets.CI_TOKEN }}
+    #     commit-message: ${{ github.event.inputs.service }} to prod 
+    #     committer: GitHub <noreply@github.com>
+    #     author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+    #     signoff: false
+    #     branch: ${{ steps.var.outputs.branch }}
+    #     delete-branch: true
+    #     title: '${{ github.event.inputs.service }} to prod'
+    #     labels: |
+    #       api
+    #       automated pr
+    #     team-reviewers: |
+    #       owners
+    #       maintainers
+    #     milestone: 1
+    #     draft: false
+    # - name: Check outputs
+    #   run: |
+    #     echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+    #     echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
+    # - name: Promote Prod
+    #   working-directory: ${{ steps.var.outputs.dir }} 
+    #   run: |
+    #     git pull origin master --rebase
+    #     git checkout ${{ steps.var.outputs.branch }}
+    #     sed -i 's/tag.*/tag: ${{ steps.var.outputs.tag }}/g' k8s/values.yaml
+    #     git add k8s/values.yaml
+    #     git status
+    #     git config --local user.email "action@github.com"
+    #     git config --local user.name "GitHub Action"
+    #     git commit -m "promote ${{ github.event.inputs.service }}-service image to prod"
         git push --set-upstream origin ${{ steps.var.outputs.branch }}
