@@ -49,10 +49,6 @@ jobs:
       id: branch
       run: |
         git branch ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
-        git push --set-upstream origin ${{ steps.var.outputs.branch }}
-    - name: Change the Tag  
-      run: |
-        git pull origin master --rebase
         git checkout ${{ steps.var.outputs.branch }}
         sed -i "s/tag.*/tag: ${{ steps.var.outputs.tag }}/g" ${{ steps.var.outputs.dir }}/k8s/values.yaml
         git add ${{ steps.var.outputs.dir }}/k8s/values.yaml
@@ -60,6 +56,16 @@ jobs:
         git config --local user.name "GitHub Action"        
         git commit -m "promote ${{ steps.var.outputs.tag }} to prod"
         git push --set-upstream origin ${{ steps.var.outputs.branch }}
+    # - name: Change the Tag  
+    #   run: |
+    #     git pull origin master --rebase
+    #     git checkout ${{ steps.var.outputs.branch }}
+    #     sed -i "s/tag.*/tag: ${{ steps.var.outputs.tag }}/g" ${{ steps.var.outputs.dir }}/k8s/values.yaml
+    #     git add ${{ steps.var.outputs.dir }}/k8s/values.yaml
+    #     git config --local user.email "action@github.com"
+    #     git config --local user.name "GitHub Action"        
+    #     git commit -m "promote ${{ steps.var.outputs.tag }} to prod"
+    #     git push --set-upstream origin ${{ steps.var.outputs.branch }}
     - name: Create Pull Request
       uses: repo-sync/pull-request@v2
       with:
