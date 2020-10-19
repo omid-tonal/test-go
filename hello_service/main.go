@@ -11,5 +11,6 @@ func main() {
 }
 
 func HelloServer(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello Tonal v1.1.8 %s!", r.URL.Path[1:])
+	fmt.Fprintf(w, "Hello Tonal v1.1.9 %s!", r.URL.Path[1:])
+	fmt.Println("Version v1.1.9")
 }
