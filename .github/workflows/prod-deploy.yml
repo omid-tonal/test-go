@@ -48,13 +48,12 @@ jobs:
     - name: Create Branch
       id: branch
       run: |
-        git pull --rebase origin prod/${{ steps.var.outputs.dir }}     
-        git branch ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
-        git checkout ${{ steps.var.outputs.branch }}
-        sed -i "s/tag.*/tag: ${{ steps.var.outputs.tag }}/g" ${{ steps.var.outputs.dir }}/k8s/values.yaml
-        git add ${{ steps.var.outputs.dir }}/k8s/values.yaml
         git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"        
+        git config --local user.name "GitHub Action"  
+        git pull --rebase origin prod/${{ steps.var.outputs.dir }}     
+        git checkout -b ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
+        sed -i "s/tag.*/tag: ${{ steps.var.outputs.tag }}/g" ${{ steps.var.outputs.dir }}/k8s/values.yaml
+        git add ${{ steps.var.outputs.dir }}/k8s/values.yaml      
         git commit -m "promote ${{ steps.var.outputs.tag }} to prod"
         git push --set-upstream origin ${{ steps.var.outputs.branch }}
     # - name: Change the Tag  
