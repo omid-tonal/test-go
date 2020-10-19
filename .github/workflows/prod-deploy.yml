@@ -48,6 +48,7 @@ jobs:
     - name: Create Branch
       id: branch
       run: |
+        git pull --rebase origin prod/${{ steps.var.outputs.dir }}     
         git branch ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
         git checkout ${{ steps.var.outputs.branch }}
         sed -i "s/tag.*/tag: ${{ steps.var.outputs.tag }}/g" ${{ steps.var.outputs.dir }}/k8s/values.yaml
