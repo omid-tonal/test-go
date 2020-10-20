@@ -38,23 +38,19 @@ jobs:
       run: |
         rm -rf kubeconfig
         TAG=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d ":" -f2)
-        BRANCH=qa/${{ github.event.inputs.service }}-$SHA
         SDIR=$(echo "${{ github.event.inputs.service }}" | tr - _)_service
         SHA=$(git log --oneline -M --stat --follow --  $SDIR/k8s/values.yaml | grep $TAG | cut -d " " -f1)
-        echo "::set-output name=sha::$SHA"
-        echo "::set-output name=tag::$TAG"
-        echo "::set-output name=branch::$BRANCH"
-        echo "::set-output name=dir::$SDIR"            
+        BRANCH=qa/${{ github.event.inputs.service }}-$SHA           
     - name: Create Branch
       id: branch
       run: |    
-        git branch ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
-        git push --set-upstream origin ${{ steps.var.outputs.branch }}
+        git branch $BRANCH $SHA
+        git push --set-upstream origin $BRANCH
     - name: Create Pull Request
       uses: repo-sync/pull-request@v2
       with:
-        source_branch: "${{ steps.var.outputs.branch }}"
-        destination_branch: "prod/${{ steps.var.outputs.dir }}"
+        source_branch: "$BRANCH"
+        destination_branch: "prod/$SDIR"
         pr_title: "${{ github.event.inputs.service }} to prod"
         pr_body: ":crown: *An automated PR*"
         pr_reviewer: "omid-tonal"
