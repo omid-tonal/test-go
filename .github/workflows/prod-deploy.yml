@@ -37,35 +37,19 @@ jobs:
       id: var
       run: |
         rm -rf kubeconfig
-        SHA=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d "-" -f7)
         TAG=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d ":" -f2)
         BRANCH=qa/${{ github.event.inputs.service }}-$SHA
         SDIR=$(echo "${{ github.event.inputs.service }}" | tr - _)_service
+        SHA=$(git log --oneline -M --stat --follow --  $SDIR/k8s/values.yaml | grep $TAG | cut -d " " -f1)
         echo "::set-output name=sha::$SHA"
         echo "::set-output name=tag::$TAG"
         echo "::set-output name=branch::$BRANCH"
         echo "::set-output name=dir::$SDIR"            
     - name: Create Branch
       id: branch
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"  
-        git pull --rebase origin prod/${{ steps.var.outputs.dir }}     
-        git checkout -b ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
-        sed -i "s/tag.*/tag: ${{ steps.var.outputs.tag }}/g" ${{ steps.var.outputs.dir }}/k8s/values.yaml
-        git add ${{ steps.var.outputs.dir }}/k8s/values.yaml      
-        git commit -m "promote ${{ steps.var.outputs.tag }} to prod"
+      run: |    
+        git branch ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
         git push --set-upstream origin ${{ steps.var.outputs.branch }}
-    # - name: Change the Tag  
-    #   run: |
-    #     git pull origin master --rebase
-    #     git checkout ${{ steps.var.outputs.branch }}
-    #     sed -i "s/tag.*/tag: ${{ steps.var.outputs.tag }}/g" ${{ steps.var.outputs.dir }}/k8s/values.yaml
-    #     git add ${{ steps.var.outputs.dir }}/k8s/values.yaml
-    #     git config --local user.email "action@github.com"
-    #     git config --local user.name "GitHub Action"        
-    #     git commit -m "promote ${{ steps.var.outputs.tag }} to prod"
-    #     git push --set-upstream origin ${{ steps.var.outputs.branch }}
     - name: Create Pull Request
       uses: repo-sync/pull-request@v2
       with:
@@ -75,7 +59,6 @@ jobs:
         pr_body: ":crown: *An automated PR*"
         pr_reviewer: "omid-tonal"
         pr_assignee: "omid-tonal"
-        pr_label: "automated pr, api, deploy"
-        pr_draft: true
+        pr_label: "automated pr,api,deploy"
         pr_allow_empty: true
         github_token: ${{ secrets.GITHUB_TOKEN }}
