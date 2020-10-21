@@ -55,7 +55,7 @@ jobs:
         echo "::set-output name=pbe::$PBE"  
     - name: Create Prod Branch
       # Check prod branch exist or not      
-      if: ${{ steps.var.outputs.dir != steps.var.outputs.pbe }}
+      if: ${{ github.event.inputs.service != steps.var.outputs.pbe }}
       run: |    
         git branch ${{ steps.var.outputs.prod-branch }} ${{ steps.var.outputs.prod-sha }}
         git push --set-upstream origin ${{ steps.var.outputs.prod-branch }}      
