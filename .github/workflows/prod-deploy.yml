@@ -44,7 +44,7 @@ jobs:
         QBRANCH=qa/${{ github.event.inputs.service }}-$QSHA
         PTAG=$(echo ${{ steps.prod-image.outputs.result }} | tr -d ] | cut -d ":" -f2)
         PSHA=$(git log --oneline -M --stat --follow --  $SDIR/k8s/values.yaml | grep $PTAG | cut -d " " -f1)
-        PBRANCH=Prod/${{ github.event.inputs.service }}_service
+        PBRANCH=prod/${{ github.event.inputs.service }}_service
         PBE=$(git branch -r -l | grep PBRANCH | cut -d '/' -f3 | cut -d '_' -f1)
 
         echo "::set-output name=qa-sha::$QSHA"
