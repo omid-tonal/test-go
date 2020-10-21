@@ -29,6 +29,7 @@ jobs:
       with:
         args: get -n tools applications.argoproj.io prod-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"        
     - name: Check Tags
+      # Check the diffrence between prod and qa images
       if: ${{ steps.qa-image.outputs.result == steps.prod-image.outputs.result }}
       run: |
           echo "no changes detected in prod-${{ github.event.inputs.service }}-service"
@@ -37,25 +38,38 @@ jobs:
       id: var
       run: |
         rm -rf kubeconfig
-        TAG=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d ":" -f2)
         SDIR=$(echo "${{ github.event.inputs.service }}" | tr - _)_service
-        SHA=$(git log --oneline -M --stat --follow --  $SDIR/k8s/values.yaml | grep $TAG | cut -d " " -f1)
-        BRANCH=qa/${{ github.event.inputs.service }}-$SHA
-        echo "::set-output name=sha::$SHA"
-        echo "::set-output name=branch::$BRANCH"
-        echo "::set-output name=dir::$SDIR"            
-    - name: Create Branch
-      id: branch
+        QTAG=$(echo ${{ steps.qa-image.outputs.result }} | tr -d ] | cut -d ":" -f2)
+        QSHA=$(git log --oneline -M --stat --follow --  $SDIR/k8s/values.yaml | grep $QTAG | cut -d " " -f1)
+        QBRANCH=qa/${{ github.event.inputs.service }}-$QSHA
+        PTAG=$(echo ${{ steps.prod-image.outputs.result }} | tr -d ] | cut -d ":" -f2)
+        PSHA=$(git log --oneline -M --stat --follow --  $SDIR/k8s/values.yaml | grep $PTAG | cut -d " " -f1)
+        PBRANCH=Prod/${{ github.event.inputs.service }}_service
+        PBE=$(git branch -r -l | grep PBRANCH | cut -d '/' -f3 | cut -d '_' -f1)
+
+        echo "::set-output name=qa-sha::$QSHA"
+        echo "::set-output name=qa-branch::$QBRANCH"
+        echo "::set-output name=prod-sha::$PSHA"
+        echo "::set-output name=prod-branch::$PBRANCH"
+        echo "::set-output name=dir::$SDIR"
+        echo "::set-output name=pbe::$PBE"  
+    - name: Create Prod Branch
+      # Check prod branch exist or not      
+      if: ${{ steps.var.outputs.dir != steps.var.outputs.pbe }}
       run: |    
-        git branch ${{ steps.var.outputs.branch }} ${{ steps.var.outputs.sha }}
-        git push --set-upstream origin ${{ steps.var.outputs.branch }}
+        git branch ${{ steps.var.outputs.prod-branch }} ${{ steps.var.outputs.prod-sha }}
+        git push --set-upstream origin ${{ steps.var.outputs.prod-branch }}      
+    - name: Create QA Branch
+      run: |    
+        git branch ${{ steps.var.outputs.qa-branch }} ${{ steps.var.outputs.qa-sha }}
+        git push --set-upstream origin ${{ steps.var.outputs.qa-branch }}      
     - name: Create Pull Request
       uses: repo-sync/pull-request@v2
       with:
-        source_branch: "${{ steps.var.outputs.branch }}"
-        destination_branch: "prod/${{ steps.var.outputs.dir }}"
+        source_branch: "${{ steps.var.outputs.qa-branch }}"
+        destination_branch: "${{ steps.var.outputs.prod-branch }}"
         pr_title: "${{ github.event.inputs.service }} to prod"
-        pr_body: ":crown: *An automated PR*"
+        pr_body: ":crown: *An automated PR to pormote ${{ github.event.inputs.service }}_service to Prod*"
         pr_reviewer: "omid-tonal"
         pr_assignee: "omid-tonal"
         pr_label: "automated pr,api,deploy"
