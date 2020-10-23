@@ -55,7 +55,7 @@ jobs:
         echo "::set-output name=pbe::$PBE"
     - name: Check QA Tag
       # Check qa tag is part of the master branch  
-      if: "contains('steps.var.outputs.qa-sha', '')" 
+      if: ${{ steps.var.outputs.qa-sha == ''}} 
       run: |
           echo "qa deployment tag is not part of the master branch"
           exit 1            
