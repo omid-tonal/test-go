@@ -7,7 +7,10 @@ on:
       - 'scripts/**'
     branches-ignore:
       - 'prod/**'
-      - 'qa/**'  
+      - 'qa/**'
+  pull_request:
+    branches:
+      - 'prod/**'  
 name: hello-service 
 jobs:
   check:
