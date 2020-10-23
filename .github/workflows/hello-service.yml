@@ -5,6 +5,9 @@ on:
       - '!hello_service/k8s/**'
       - '!hello_service/k8s-external/**'
       - 'scripts/**'
+    branches-ignore:
+      - 'prod/**'
+      - 'qa/**'  
 name: hello-service 
 jobs:
   check:
