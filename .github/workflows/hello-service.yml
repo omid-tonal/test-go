@@ -8,9 +8,6 @@ on:
     branches-ignore:
       - 'prod/**'
       - 'qa/**'
-  pull_request:
-    branches:
-      - 'prod/**'  
 name: hello-service 
 jobs:
   check:
