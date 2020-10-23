@@ -2,7 +2,7 @@ hello-service:
   replicas: 2
   image:
     name: hello-service
-    tag: t2020-10-23-9fece49
+    tag: t2020-10-23-64202d6
   envFrom:
     envConfigEnabled: false
   service:
