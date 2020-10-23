@@ -28,7 +28,7 @@ jobs:
         KUBE_CONFIG_DATA: ${{ secrets.KUBECONFIG }}
       with:
         args: get -n tools applications.argoproj.io prod-${{ github.event.inputs.service }}-service -o jsonpath="{..images}"        
-    - name: Check Tags
+    - name: Check Prod and QA Tags
       # Check the difference between prod and qa images
       if: ${{ steps.qa-image.outputs.result == steps.prod-image.outputs.result }}
       run: |
@@ -53,7 +53,7 @@ jobs:
         echo "::set-output name=prod-branch::$PBRANCH"
         echo "::set-output name=dir::$SDIR"
         echo "::set-output name=pbe::$PBE"
-    - name: Check Tags
+    - name: Check QA Tag
       # Check qa tag is part of the master branch  
       if: "contains('steps.var.outputs.qa-sha', '')" 
       run: |
