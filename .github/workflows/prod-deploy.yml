@@ -52,19 +52,23 @@ jobs:
         echo "::set-output name=prod-sha::$PSHA"
         echo "::set-output name=prod-branch::$PBRANCH"
         echo "::set-output name=dir::$SDIR"
-        echo "::set-output name=pbe::$PBE"    
+        echo "::set-output name=pbe::$PBE"
+    - name: Check Tags
+      # Check qa tag is part of the master branch  
+      if: "contains('steps.var.outputs.qa-sha', '')" 
+      run: |
+          echo "qa deployment tag is not part of the master branch"
+          exit 1            
     - name: Create Prod Branch
       # Check prod branch exist or not      
       if: ${{ steps.var.outputs.dir != steps.var.outputs.pbe }}
       run: |    
         git branch ${{ steps.var.outputs.prod-branch }} ${{ steps.var.outputs.prod-sha }}
-        git push --set-upstream origin ${{ steps.var.outputs.prod-branch }}      
+        git push --set-upstream origin ${{ steps.var.outputs.prod-branch }}              
     - name: Create QA Branch
-    # Check qa tag is from master  
-      if: steps.var.outputs.qa-sha
       run: |    
         git branch ${{ steps.var.outputs.qa-branch }} ${{ steps.var.outputs.qa-sha }}
-        git push --set-upstream origin ${{ steps.var.outputs.qa-branch }}      
+        git push --set-upstream origin ${{ steps.var.outputs.qa-branch }} 
     - name: Create Pull Request
       uses: repo-sync/pull-request@v2
       with:
