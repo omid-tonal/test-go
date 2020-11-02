@@ -7,6 +7,8 @@ hello-service:
     envConfigEnabled: false
   service:
     enabled: false
+serviceMonitor:
+  enabled: false    
   health:
     livenessProbe:
       httpGet:
