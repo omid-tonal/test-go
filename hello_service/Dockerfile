@@ -13,9 +13,10 @@ ARG BRANCH
 ARG COMMIT
 ARG TEST
 # download from git
-RUN apk --no-cache add git gcc musl-dev \
-    && git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/" \
-    && git clone https://github.com/omid-tonal/${REPO}.git
+RUN apk --no-cache add git gcc musl-dev
+    # && git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/" \
+    # && git clone https://github.com/omid-tonal/${REPO}.git
+COPY  ${REPO}/ ${REPO}/   
 WORKDIR ${REPO}/hello_service
 RUN git checkout ${COMMIT}
 # build 
