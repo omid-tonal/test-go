@@ -55,7 +55,7 @@ jobs:
         fi
         # Build a docker image
         docker build --no-cache --build-arg GITHUB_TOKEN  --build-arg REPO --build-arg BRANCH --build-arg COMMIT -t $ECR/$SERVICE_NAME:$LATEST_TAG \
-                                              -t $ECR/$SERVICE_NAME:$TAG $SERVICE_PATH/.      
+                                              -t $ECR/$SERVICE_NAME:$TAG -f $REPO/$SERVICE_PATH/Dockerfile .     
         echo "::set-output name=tag::$TAG"
         echo "::set-output name=latest::$LATEST_TAG"
         echo "::set-output name=image::$ECR/$SERVICE_NAME"
