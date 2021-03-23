@@ -16,8 +16,8 @@ ARG TEST
 RUN apk --no-cache add git gcc musl-dev
     # && git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/" \
     # && git clone https://github.com/omid-tonal/${REPO}.git
-COPY  ${REPO}/ ${REPO}/   
-WORKDIR ${REPO}/hello_service
+COPY  . .
+WORKDIR hello_service
 RUN git checkout ${COMMIT}
 # build 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /hello_service main.go
