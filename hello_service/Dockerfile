@@ -18,7 +18,6 @@ RUN apk --no-cache add git gcc musl-dev
     # && git clone https://github.com/omid-tonal/${REPO}.git
 COPY  . .
 WORKDIR hello_service
-RUN git checkout ${COMMIT}
 # build 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /hello_service main.go
 
